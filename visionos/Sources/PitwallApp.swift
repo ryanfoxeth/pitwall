@@ -7,9 +7,9 @@ enum Panel: String, CaseIterable, Codable, Identifiable {
 @main struct PitwallApp: App {
     @StateObject private var race = RaceStore()
     var body: some Scene {
-        WindowGroup("Pitwall", id: "controls") { ControlView().environmentObject(race).task { race.start() } }
+        Window("Pitwall", id: "controls") { ControlView().environmentObject(race).task { race.start() } }
             .defaultSize(width: 620, height: 680)
-        WindowGroup("Tabletop", id: "tabletop-resizable") { TabletopView().environmentObject(race)
+        Window("Tabletop", id: "tabletop-resizable") { TabletopView().environmentObject(race)
             .ornament(attachmentAnchor: .scene(.bottom)) { ControlsButton().padding(12).glassBackgroundEffect() }
         }
             .windowStyle(.volumetric).windowResizability(.contentSize)

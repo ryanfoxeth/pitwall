@@ -1,13 +1,17 @@
 import SwiftUI
 import RealityKit
 import UIKit
+import Spatial
 
 @MainActor final class TableScene:ObservableObject {
  let presentation=Entity()
  init() { presentation.addChild(root) }
  let root=Entity();var bikes:[Int:Entity]=[:];var trails:[ModelEntity]=[];var lastTrack:[SIMD3<Float>]=[];var theme:RaceTheme = .tron;var lastColors:[Int:UIColor]=[:];var lastTitle="";var previousHeading:[Int:Float]=[:];var lastFrameTime=Date();var vehicleRoles:[Int:String]=[:]
+ var lastFitDiagnostic = ""
+ var lastFitDiagnosticTime = Date.distantPast
  var center=SIMD3<Float>.zero;var factor:Float=1;var baseZ:Float=0
  func fit(in available: BoundingBox) {
+  guard available.extents.x > 0.05, available.extents.y > 0.01, available.extents.z > 0.05 else { return }
   // Measure in the presentation parent's coordinates. Scene/world bounds can
   // include system volume scaling, feeding that scale back into our next fit.
   root.position = .zero
@@ -18,6 +22,15 @@ import UIKit
   let scale = max(0.001, min(ratios.x,min(ratios.y,ratios.z))*0.96)
   presentation.scale = SIMD3(repeating: scale)
   presentation.position = available.center-bounds.center*scale
+  #if DEBUG
+  let diagnostic = "target=\(available)\nmodel=\(bounds)\nscale=\(scale)\nposition=\(presentation.position)\ntrack=\(lastTitle)\n"
+  if diagnostic != lastFitDiagnostic, Date().timeIntervalSince(lastFitDiagnosticTime) > 2 {
+   lastFitDiagnosticTime = Date()
+   lastFitDiagnostic = diagnostic
+   let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("tabletop-fit.txt")
+   try? diagnostic.write(to: url, atomically: true, encoding: .utf8)
+  }
+  #endif
  }
  func project(_ p:SIMD3<Float>)->SIMD3<Float>{SIMD3((p.x-center.x)*factor,(p.z-baseZ)*factor+0.006,-(p.y-center.y)*factor)}
  func material(_ c:UIColor)->UnlitMaterial{UnlitMaterial(color:c)}
@@ -223,6 +236,7 @@ struct TrackVolume {
 struct TabletopView:View {
  @EnvironmentObject var race:RaceStore
  @StateObject private var scene=TableScene()
+ @State private var volumeFrame: Rect3D = .zero
  @PhysicalMetric(from: .meters) private var pointsPerMeter: CGFloat = 1
  var body:some View {
   GeometryReader3D { geometry in
@@ -234,17 +248,17 @@ struct TabletopView:View {
     scene.update(race)
     fit(content, geometry: geometry)
    }
+   .onGeometryChange3D(for: Rect3D.self) { $0.frame(in: .local) } action: { volumeFrame = $0 }
    .frame(width: geometry.size.width, height: geometry.size.height)
    .frame(depth: geometry.size.depth)
   }
-  .onAppear { race.tabletopOpen = true }
-  .onDisappear { race.tabletopOpen = false }
   .frame(minWidth: 0.25*pointsPerMeter, maxWidth: 6.5*pointsPerMeter,
          minHeight: 0.12*pointsPerMeter, maxHeight: 3*pointsPerMeter)
   .frame(minDepth: 0.25*pointsPerMeter, maxDepth: 6.5*pointsPerMeter)
  }
  private func fit(_ content: RealityViewContent, geometry: GeometryProxy3D) {
-  let available = content.convert(geometry.frame(in: .local), from: .local, to: .scene)
+  let frame = volumeFrame.size.width > 0 ? volumeFrame : geometry.frame(in: .local)
+  let available = content.convert(frame, from: .local, to: .scene)
   scene.fit(in: available)
 
  }

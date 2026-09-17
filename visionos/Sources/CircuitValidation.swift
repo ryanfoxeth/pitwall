@@ -34,11 +34,6 @@ import RealityKit
  let scene=TableScene()
  let world=Entity();world.addChild(scene.presentation)
  let identity=scene.presentation.id
- race.tabletopOpen=false
- precondition(race.requestTabletop() && !race.requestTabletop())
- race.tabletopOpen=false
- precondition(race.requestTabletop())
- race.tabletopOpen=false
  var checks=0
  var failures:[String]=[]
  for id in ["baku","monaco","spa"] {
@@ -59,6 +54,6 @@ import RealityKit
   }
  }
  let url=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("volume-validation.json")
- try! JSONSerialization.data(withJSONObject:["passed":failures.isEmpty,"failures":failures,"fitChecks":checks,"singleOpenGuard":true]).write(to:url)
+ try! JSONSerialization.data(withJSONObject:["passed":failures.isEmpty,"failures":failures,"fitChecks":checks]).write(to:url)
 }
 #endif

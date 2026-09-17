@@ -26,7 +26,7 @@ The default listens only on `127.0.0.1:3000`. Put it behind an HTTPS reverse pro
 
 ## Quick start: Vision Pro
 
-Requires macOS, Xcode with visionOS SDK/device support, XcodeGen, and Apple signing credentials for a physical headset. Current source was built with Xcode 27; deployment target is visionOS 2.0.
+Requires macOS, Xcode with visionOS SDK/device support, XcodeGen, and Apple signing credentials for a physical headset. Current source was built with Xcode 27; deployment target is visionOS 26.0, which provides native single-instance Controls and tabletop windows.
 
 ```sh
 cd visionos
