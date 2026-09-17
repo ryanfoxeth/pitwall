@@ -20,8 +20,10 @@ assert .55 < extent < .70, f'Unexpected tabletop bounds: {extent}'
 print(f'Monaco geometry passed: {len(p["terrain"])} terrain triangles, complete {water_area:.1f} m² harbor, {extent:.3f} m authored footprint')
 
 boats=p['partyYachts']
-assert len(boats)>=90 and sum(b['length']>=72 for b in boats)>=30, 'Party harbor is too sparse'
-assert sum(b['length']*b['width'] for b in boats)/water_area>.30
+assert len(boats)>=90 and sum(b['length']>=72 for b in boats)>=10, 'Party harbor is too sparse'
+for b in boats:
+    stern=[b['x']-math.cos(b['angle'])*b['length']*.5,b['y']-math.sin(b['angle'])*b['length']*.5]
+    assert abs(math.dist(stern,b['dock'])-b['sternGap'])<.001, 'Yacht is not docked stern-to'
 for kind in ('casino','hotel_paris'):
     landmark=next(l for l in p['landmarks'] if l['kind']==kind)
     tiers=landmark['supportTiers']

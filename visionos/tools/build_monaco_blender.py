@@ -106,15 +106,31 @@ for l in data['landmarks']:
    box('Casino pilaster',cp(a+2,-7,12),(.8,1,15),'White',angle)
   cylinder('Casino clock surround',cp(0,-7.5,25),3,.6,'Gold').rotation_euler.x=math.pi/2
   dome('Opera roof dome',(x+14,y-22,z+24),12,'Slate')
-# Open-sided tunnel: columns and narrow roof beams, not a solid occluding slab.
-tunnel=data['tunnel']
+# Covered Boulevard Louis II tunnel: continuous roof, solid inland wall,
+# open seaward colonnade, and distinct entrance/exit portals.
+def racing_center(x,y):
+ best=1e30;point=(x,y)
+ for a,b in zip(track,track[1:]):
+  dx,dy=b[0]-a[0],b[1]-a[1];t=max(0,min(1,((x-a[0])*dx+(y-a[1])*dy)/max(1e-8,dx*dx+dy*dy)))
+  q=(a[0]+t*dx,a[1]+t*dy);d=(q[0]-x)**2+(q[1]-y)**2
+  if d<best:best=d;point=q
+ return point
+# OSM street center and racing line differ by up to 7.3m. Register roof to
+# the rendered racing centerline so the entire road passes inside the tunnel.
+tunnel=[racing_center(*p) for p in data['tunnel']]
+water_center=(sum(p[0] for p in water)/len(water),sum(p[1] for p in water)/len(water))
 for i,(a,b) in enumerate(zip(tunnel,tunnel[1:])):
  za=ground(*a);zb=ground(*b)
- ribbon('Tunnel roof edge',(*a,za+8),(*b,zb+8),2.5,1,'Quay')
+ dx=b[0]-a[0];dy=b[1]-a[1];length=max(.1,math.hypot(dx,dy));nx=-dy/length;ny=dx/length
+ sea=1 if (water_center[0]-a[0])*nx+(water_center[1]-a[1])*ny>0 else -1
+ ribbon('Continuous tunnel roof',(*a,za+8),(*b,zb+8),18,1.3,'Quay')
+ ribbon('Tunnel inland wall',(a[0]-nx*sea*8,a[1]-ny*sea*8,za+3.5),(b[0]-nx*sea*8,b[1]-ny*sea*8,zb+3.5),1.2,8,'Slate')
  if i%2==0:
-  dx=b[0]-a[0];dy=b[1]-a[1];length=max(.1,math.hypot(dx,dy));nx=-dy/length;ny=dx/length
-  for side in [-1,1]:box('Tunnel pier',(a[0]+nx*side*7,a[1]+ny*side*7,za+3.4),(1.2,1.2,7),'Ivory')
-  ribbon('Tunnel arch', (a[0]-nx*7,a[1]-ny*7,za+7),(a[0]+nx*7,a[1]+ny*7,za+7),1.1,1.2,'Ivory')
+  box('Seaward tunnel column',(a[0]+nx*sea*8,a[1]+ny*sea*8,za+3.5),(1.6,1.6,8),'Ivory')
+ for end in ([a] if i==0 else [b] if i==len(tunnel)-2 else []):
+  z=ground(*end)
+  for side in [-1,1]:box('Tunnel portal pier',(end[0]+nx*side*8,end[1]+ny*side*8,z+3.5),(2.3,2.3,8),'Ivory')
+  ribbon('Tunnel portal lintel',(end[0]-nx*9,end[1]-ny*9,z+8),(end[0]+nx*9,end[1]+ny*9,z+8),2,1.8,'Ivory')
 # Real mapped piers and original yachts.
 def inside(p,poly):
  x,y=p;c=False
@@ -161,8 +177,13 @@ def yacht(x,y,angle,length,w,style):
   for side in [-1,1]:deckbox('Helipad H',.33*length,side*w*.12,h+.8,(length*.095,.7,.12),'White')
   deckbox('Helipad H crossbar',.33*length,0,h+.8,(.7,w*.28,.12),'White')
 for pier in data['piers']:
- for a,b in zip(pier['points'],pier['points'][1:]):ribbon('Marina jetty',(*a,.5),(*b,.5),2.5,1,'Quay')
-for boat in boats:yacht(boat['x'],boat['y'],boat['angle'],boat['length'],boat['width'],boat['style'])
+ if pier['points'][0]==pier['points'][-1]:poly('Solid marina pontoon',pier['points'],0,.7,'Quay')
+ else:
+  for a,b in zip(pier['points'],pier['points'][1:]):ribbon('Marina jetty',(*a,.5),(*b,.5),2.5,1,'Quay')
+for boat in boats:
+ yacht(boat['x'],boat['y'],boat['angle'],boat['length'],boat['width'],boat['style'])
+ stern=(boat['x']-math.cos(boat['angle'])*boat['length']*.5,boat['y']-math.sin(boat['angle'])*boat['length']*.5)
+ ribbon('Stern boarding passerelle',(*boat['dock'],.8),(*stern,1.2),1.1,.25,'Teak')
 # Trackside palms at the waterfront and casino square.
 for x,y in [(-260,-310),(-260,-260),(-260,-210),(145,255),(155,272),(125,262),(65,26),(105,35)]:
  z=ground(x,y);cylinder('Palm trunk',(x,y,z+5),.7,10,'Terracotta',8)

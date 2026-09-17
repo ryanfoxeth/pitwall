@@ -49,7 +49,7 @@ struct ControlView: View {
    HStack{Text("Rotate");Slider(value:$race.rotation,in:-Double.pi...Double.pi)}
    Text("Resize the track using the volume’s corner handles. The entire model scales uniformly to fit; enlarge height and depth too if one dimension limits its size.").font(.caption).foregroundStyle(.secondary)
    DisclosureGroup("Model credits") {
-    Text("Monaco Grand Prix scenery: © OpenStreetMap contributors (ODbL). Original stylized landmarks and yachts. Approximate building heights and terrain; tunnel shown as a cutaway for visibility.").font(.caption)
+    Text("Monaco Grand Prix scenery: © OpenStreetMap contributors (ODbL). Original stylized landmarks and yachts. Approximate building heights and terrain; covered tunnel and decorative docked yachts.").font(.caption)
     Link("OpenStreetMap attribution",destination:URL(string:"https://www.openstreetmap.org/copyright")!)
     Text("Optional models: Tron Light Cycle by Firestar · Lightcycle by SpringSociety. CC BY 4.0. Adapted for Pitwall: normalized size/orientation, removed separate trail and converted to USDZ.").font(.caption)
     Link("Firestar — Tron Light Cycle",destination:URL(string:"https://sketchfab.com/3d-models/tron-light-cycle-083076c8a3644b088ce7f1e107a12ca6")!)
