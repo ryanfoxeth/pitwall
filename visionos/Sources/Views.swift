@@ -15,12 +15,14 @@ struct ControlView: View {
    Picker("Theme",selection:$race.theme){ForEach(RaceTheme.allCases){theme in Text(theme.title).tag(theme)}}.pickerStyle(.segmented)
    Text(race.theme.detail).font(.caption).foregroundStyle(race.theme.accent)
    TextField("https://your-server.example/api/f1/device",text:$race.serverURL).textInputAutocapitalization(.never).autocorrectionDisabled()
-   Picker("Source",selection:$race.mode){Text("Historical replay").tag("Replay");Text("Live server").tag("Live")}.pickerStyle(.segmented).onChange(of:race.mode){race.switchMode()}
+   Picker("Source",selection:$race.mode){Text("Historical replay").tag("Replay");Text("Live server").tag("Live");Text("Track library").tag("Tracks")}.pickerStyle(.segmented).onChange(of:race.mode){race.switchMode()}
    if race.mode=="Replay" {
     HStack {Button(race.playing ? "Pause":"Play",systemImage:race.playing ? "pause.fill":"play.fill"){race.playing.toggle()};Picker("Speed",selection:$race.speed){ForEach([0.5,1,2,4,8],id:\.self){Text("\($0,specifier:"%g")×").tag($0)}}}
     Slider(value:$race.time,in:0...max(1,race.duration)).onChange(of:race.time){if !race.playing {race.updateReplay()}}
     HStack{Text(Duration.seconds(race.time).formatted(.time(pattern:.minuteSecond)));Spacer();Text("Lap \(race.currentLap)");Spacer();Text(Duration.seconds(race.duration).formatted(.time(pattern:.minuteSecond)))}.monospacedDigit()
     Text("Recorded race · all windows share this clock. Missing observations stay missing; no fabricated car motion.").font(.caption).foregroundStyle(.secondary)
+   } else if race.mode=="Tracks" {
+    CircuitLibraryView()
    } else {
     Text("Sync with TV").font(.title2.bold())
     HStack {Text("Delay");Slider(value:$race.tvDelay,in:0...300,step:1);Text("\(Int(race.tvDelay))s").monospacedDigit().frame(width:50)}
@@ -56,6 +58,10 @@ struct ControlView: View {
    ForEach(Panel.allCases){p in HStack{Button(p.rawValue){openWindow(value:p)};Spacer();Button("Close",systemImage:"xmark"){dismissWindow(value:p)}.labelStyle(.iconOnly)}}
    Text("Move the volume above your table using its window handle. It is a movable tabletop display, not a detected physical-table anchor.").font(.caption).foregroundStyle(.secondary)
   }.padding(28) }.task {
+   #if DEBUG
+   if ProcessInfo.processInfo.arguments.contains("--validate-circuits") {await validateCircuits(race)}
+   if let i=ProcessInfo.processInfo.arguments.firstIndex(of:"--preview-circuit"),ProcessInfo.processInfo.arguments.count>i+1,let c=CircuitCatalog.all.first(where:{$0.id==ProcessInfo.processInfo.arguments[i+1]}) {race.previewCircuit(c);openWindow(id:"tabletop-resizable")}
+   #endif
    if ProcessInfo.processInfo.arguments.contains("--preview-tabletop") {
     if let i=ProcessInfo.processInfo.arguments.firstIndex(of:"--theme"),ProcessInfo.processInfo.arguments.count>i+1,let theme=RaceTheme(rawValue:ProcessInfo.processInfo.arguments[i+1]) {race.theme=theme}
     race.time=1800;race.updateReplay();race.playing = !ProcessInfo.processInfo.arguments.contains("--paused-preview")

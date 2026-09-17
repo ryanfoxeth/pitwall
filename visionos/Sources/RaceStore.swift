@@ -24,6 +24,7 @@ struct Car: Identifiable {
     @Published var vehicleScale: Double = min(4,max(0.1,(UserDefaults.standard.object(forKey:"vehicle-scale") as? Double) ?? 1)) {
         didSet { UserDefaults.standard.set(vehicleScale,forKey:"vehicle-scale") }
     }
+    @Published var selectedCircuitID = CircuitCatalog.upcoming().first?.id ?? CircuitCatalog.all.first?.id ?? ""
     @Published var cars: [Car] = []; @Published var track: [SIMD3<Float>] = []
     @Published var selected = 1; @Published var playing = false; @Published var time: Double = 0
     @Published var speed: Double = 1; @Published var duration: Double = 7200
@@ -102,7 +103,7 @@ struct Car: Identifiable {
         if mode == "Live" { return liveBuffer.filter { $0.date > displayTime-5 && $0.date <= displayTime }.compactMap { $0.cars.first(where:{$0.id==n})?.point } }
         return stride(from:max(0,time-4),through:time,by:0.2).compactMap { sample(n,at:$0).0 }
     }
-    func switchMode() { lastTimingSecond = -1;playing=false; cars=[]; liveFrames=[];liveTrail=[:];liveBuffer=[];displayedSnapshot = -1;tvPaused=false;error=nil; if mode=="Replay" { track=replayTrack;title=replayTitle;updateReplay();status="HISTORICAL REPLAY" } else { track=[];status="Connecting to your server…";lastLive=0 } }
+    func switchMode() { lastTimingSecond = -1;playing=false; cars=[]; liveFrames=[];liveTrail=[:];liveBuffer=[];displayedSnapshot = -1;tvPaused=false;error=nil; if mode=="Replay" { track=replayTrack;title=replayTitle;updateReplay();status="HISTORICAL REPLAY" } else if mode=="Tracks" {feeds=[:];weather=[:];messages=[];if let c=CircuitCatalog.all.first(where:{$0.id==selectedCircuitID}) {track=c.track;title=c.circuit+" · "+c.location;status="TRACK PREVIEW · "+c.elevation} else {track=[];status="Select a circuit"}} else { track=[];status="Connecting to your server…";lastLive=0 } }
     func fetchLive() async {
         guard !key.isEmpty else { status="Enter a scoped Pitwall device key to connect";return }
         do {
@@ -127,7 +128,7 @@ struct Car: Identifiable {
             liveBuffer.append(LiveSnapshot(date:now,cars:next,weather:r["weather"] as? Row ?? [:],messages:r["messages"] as? [Row] ?? [],feeds:newFeeds,status:sourceStatus))
             liveBuffer.removeAll{$0.date < now-360}
             error=nil
-        } catch {self.error="Live connection unavailable. Retrying.";status="OFFLINE · positions held"}
+        } catch {guard mode=="Live" else{return};self.error="Live connection unavailable. Retrying.";status="OFFLINE · positions held"}
     }
     func telemetryID() -> String { "\(selected)-\(Int(time/30))" }
     func applyTelemetry() {
@@ -178,7 +179,7 @@ struct Car: Identifiable {
         while !Task.isCancelled {
             let now=Date();let dt=now.timeIntervalSince(prev);prev=now
             if mode=="Replay" {if playing {time=min(duration,time+min(dt,0.1)*speed);updateReplay();if time>=duration{playing=false}}}
-            else {
+            else if mode=="Live" {
                 presentLive(at: now.timeIntervalSince1970)
             }
             try? await Task.sleep(for:.milliseconds(33))

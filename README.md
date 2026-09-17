@@ -91,3 +91,11 @@ xcodebuild -project PitwallVision.xcodeproj -scheme PitwallVision -destination '
 ```
 
 See `THIRD_PARTY.md` for asset provenance. Do not commit generated race archives, imported optional models, `.env`, signing files, or device credentials.
+
+## 2026 offline track library
+
+Choose **Source → Track library** in Controls. Upcoming races appear first; **Include earlier races** reveals the full 23-race calendar snapshot (17 September 2026). Select a circuit to open its tabletop, then switch among all four themes. The next race in this snapshot is Baku, followed by Sepang, Singapore, Austin, Mexico City, Interlagos, Las Vegas, Lusail and Yas Marina.
+
+These are reference circuit outlines projected into local meters, with flat road elevation. Decorative terrain is not surveyed geography and layouts may differ from this season. No cars or race telemetry appear in track previews. Live/replay retains its provider-coordinate geometry so positions cannot be mixed with unrelated reference coordinates. Race dates in the bundled calendar are UTC calendar dates. This release does not include historical replays for every track.
+
+Circuit geometry: bacinger/f1-circuits (MIT); circuit metadata: f1db/f1db, license included with resources. Calendar: Jolpica snapshot. See `visionos/Sources/Resources/Season2026.json` and the adjacent license files.

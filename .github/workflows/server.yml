@@ -1,4 +1,4 @@
-name: Server tests
+name: Server and circuit catalog tests
 on: [push, pull_request]
 permissions:
   contents: read
@@ -17,3 +17,4 @@ jobs:
           cache-dependency-path: server/package-lock.json
       - run: npm ci --ignore-scripts
       - run: npm test
+      - run: python3 ../visionos/tools/check_circuit_catalog.py
