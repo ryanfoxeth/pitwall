@@ -24,6 +24,12 @@ struct Car: Identifiable {
     @Published var vehicleScale: Double = min(4,max(0.1,(UserDefaults.standard.object(forKey:"vehicle-scale") as? Double) ?? 1)) {
         didSet { UserDefaults.standard.set(vehicleScale,forKey:"vehicle-scale") }
     }
+    @Published var tabletopOpen = false
+    func requestTabletop() -> Bool {
+        guard !tabletopOpen else { return false }
+        tabletopOpen = true
+        return true
+    }
     @Published var automaticallySelectCircuit = true
     @Published var selectedCircuitID = CircuitCatalog.automatic()?.id ?? ""
     @Published var cars: [Car] = []; @Published var track: [SIMD3<Float>] = []

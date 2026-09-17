@@ -40,7 +40,7 @@ struct ControlView: View {
    }
    Picker("Follow driver",selection:$race.selected){ForEach(race.cars){c in Text("\(c.name) · \(c.id)").tag(c.id)}}
    Text("Only P1 and your followed driver leave a trail. If they’re the same driver, there is one trail.").font(.caption).foregroundStyle(.secondary)
-   Button("Open tabletop track",systemImage:"cube.transparent"){openWindow(id:"tabletop-resizable")}.buttonStyle(.borderedProminent)
+   Button("Open tabletop track",systemImage:"cube.transparent"){if race.requestTabletop() { openWindow(id:"tabletop-resizable") }}.buttonStyle(.borderedProminent)
    VStack(alignment:.leading,spacing:8) {
     HStack {Text("Vehicle size");Spacer();Text("\(race.vehicleScale,specifier:"%.1f")×").monospacedDigit();Button("Reset"){race.vehicleScale=1}}
     Slider(value:$race.vehicleScale,in:0.1...4,step:0.1).accessibilityLabel("Vehicle size").accessibilityValue("\(race.vehicleScale,specifier:"%.1f") times")
@@ -59,8 +59,9 @@ struct ControlView: View {
    Text("Move the volume above your table using its window handle. It is a movable tabletop display, not a detected physical-table anchor.").font(.caption).foregroundStyle(.secondary)
   }.padding(28) }.task {
    #if DEBUG
+   if ProcessInfo.processInfo.arguments.contains("--validate-volume") {validateVolume(race)}
    if ProcessInfo.processInfo.arguments.contains("--validate-circuits") {await validateCircuits(race)}
-   if let i=ProcessInfo.processInfo.arguments.firstIndex(of:"--preview-circuit"),ProcessInfo.processInfo.arguments.count>i+1,let c=CircuitCatalog.all.first(where:{$0.id==ProcessInfo.processInfo.arguments[i+1]}) {race.previewCircuit(c);openWindow(id:"tabletop-resizable")}
+   if let i=ProcessInfo.processInfo.arguments.firstIndex(of:"--preview-circuit"),ProcessInfo.processInfo.arguments.count>i+1,let c=CircuitCatalog.all.first(where:{$0.id==ProcessInfo.processInfo.arguments[i+1]}) {race.previewCircuit(c);if race.requestTabletop() { openWindow(id:"tabletop-resizable") }}
    #endif
    if ProcessInfo.processInfo.arguments.contains("--preview-tabletop") {
     if let i=ProcessInfo.processInfo.arguments.firstIndex(of:"--theme"),ProcessInfo.processInfo.arguments.count>i+1,let theme=RaceTheme(rawValue:ProcessInfo.processInfo.arguments[i+1]) {race.theme=theme}
@@ -68,7 +69,7 @@ struct ControlView: View {
     #if DEBUG
     if ProcessInfo.processInfo.arguments.contains("--validate-themes") {validateThemes(race)}
     #endif
-    openWindow(id:"tabletop-resizable")
+    if race.requestTabletop() { openWindow(id:"tabletop-resizable") }
     if !ProcessInfo.processInfo.arguments.contains("--scene-only") {openWindow(value:Panel.timing)}
    }
   }

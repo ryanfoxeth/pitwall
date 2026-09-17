@@ -3,8 +3,22 @@ import RealityKit
 import UIKit
 
 @MainActor final class TableScene:ObservableObject {
+ let presentation=Entity()
+ init() { presentation.addChild(root) }
  let root=Entity();var bikes:[Int:Entity]=[:];var trails:[ModelEntity]=[];var lastTrack:[SIMD3<Float>]=[];var theme:RaceTheme = .tron;var lastColors:[Int:UIColor]=[:];var lastTitle="";var previousHeading:[Int:Float]=[:];var lastFrameTime=Date();var vehicleRoles:[Int:String]=[:]
  var center=SIMD3<Float>.zero;var factor:Float=1;var baseZ:Float=0
+ func fit(in available: BoundingBox) {
+  // Measure in the presentation parent's coordinates. Scene/world bounds can
+  // include system volume scaling, feeding that scale back into our next fit.
+  root.position = .zero
+  root.scale = SIMD3(repeating: 1)
+  let bounds = root.visualBounds(relativeTo: presentation)
+  let extent = simd_max(bounds.extents, SIMD3(repeating: 0.001))
+  let ratios = available.extents / extent
+  let scale = max(0.001, min(ratios.x,min(ratios.y,ratios.z))*0.96)
+  presentation.scale = SIMD3(repeating: scale)
+  presentation.position = available.center-bounds.center*scale
+ }
  func project(_ p:SIMD3<Float>)->SIMD3<Float>{SIMD3((p.x-center.x)*factor,(p.z-baseZ)*factor+0.006,-(p.y-center.y)*factor)}
  func material(_ c:UIColor)->UnlitMaterial{UnlitMaterial(color:c)}
  func segment(_ a:SIMD3<Float>,_ b:SIMD3<Float>,width:Float,height:Float?=nil,color:UIColor)->ModelEntity{
@@ -211,38 +225,27 @@ struct TabletopView:View {
  @StateObject private var scene=TableScene()
  @PhysicalMetric(from: .meters) private var pointsPerMeter: CGFloat = 1
  var body:some View {
-  let volume = TrackVolume(track: race.track, rotation: race.rotation, scale: race.tableScale)
   GeometryReader3D { geometry in
    RealityView {content in
-    content.add(scene.root)
+    content.add(scene.presentation)
     scene.update(race)
-    fit(content, geometry: geometry, volume: volume)
+    fit(content, geometry: geometry)
    } update:{content in
     scene.update(race)
-    fit(content, geometry: geometry, volume: volume)
+    fit(content, geometry: geometry)
    }
    .frame(width: geometry.size.width, height: geometry.size.height)
    .frame(depth: geometry.size.depth)
   }
+  .onAppear { race.tabletopOpen = true }
+  .onDisappear { race.tabletopOpen = false }
   .frame(minWidth: 0.25*pointsPerMeter, maxWidth: 6.5*pointsPerMeter,
          minHeight: 0.12*pointsPerMeter, maxHeight: 3*pointsPerMeter)
   .frame(minDepth: 0.25*pointsPerMeter, maxDepth: 6.5*pointsPerMeter)
  }
- private func fit(_ content: RealityViewContent, geometry: GeometryProxy3D, volume: TrackVolume) {
-  let available = content.convert(geometry.frame(in: .global), from: .global, to: .scene)
-  // Measure the rendered, rotated scene, including terrain and imported props.
-  // Reset translation first: previous fitting must not feed into the next fit.
-  scene.root.position = .zero
-  scene.root.scale = SIMD3(repeating: 1)
-  let bounds = scene.root.visualBounds(relativeTo: nil)
-  let extent = simd_max(bounds.extents, SIMD3(repeating: 0.001))
-  let ratios = available.extents / extent
-  let scale = max(0.001, min(ratios.x,min(ratios.y,ratios.z))*0.96)
-  scene.root.scale = SIMD3(repeating: scale)
-  // Re-measure after scaling; RealityKit includes all transforms in these bounds.
-  let scaled = scene.root.visualBounds(relativeTo: nil)
-  // Convert the enclosing volume through global coordinates: GeometryReader
-  // and RealityView local origins are not interchangeable.
-  scene.root.position = available.center-scaled.center
+ private func fit(_ content: RealityViewContent, geometry: GeometryProxy3D) {
+  let available = content.convert(geometry.frame(in: .local), from: .local, to: .scene)
+  scene.fit(in: available)
+
  }
 }

@@ -54,7 +54,7 @@ struct CircuitLibraryView:View {
  }
  func circuitRow(_ c:SeasonCircuit,next:Bool)->some View {
   Button {
-   race.previewCircuit(c);openWindow(id:"tabletop-resizable")
+   race.previewCircuit(c);if race.requestTabletop() { openWindow(id:"tabletop-resizable") }
   } label: {
    VStack(alignment:.leading,spacing:6) {
     HStack {Text(next ? "NEXT RACE":"ROUND \(c.round)").font(.caption.bold()).foregroundStyle(.cyan);Spacer();Text(c.date).font(.caption).monospacedDigit()}
