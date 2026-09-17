@@ -19,6 +19,10 @@ import Spatial
   guard let url=Bundle.main.url(forResource:"MonacoTron",withExtension:"usdz") else {return nil}
   return try? Entity.load(contentsOf:url)
  }()
+ private static let monacoKartTemplate: Entity? = {
+  guard let url=Bundle.main.url(forResource:"MonacoKart",withExtension:"usdz") else {return nil}
+  return try? Entity.load(contentsOf:url)
+ }()
  var lastFitDiagnostic = ""
  var center=SIMD3<Float>.zero;var factor:Float=1;var baseZ:Float=0
  func fit(in available: BoundingBox) {
@@ -54,11 +58,11 @@ import Spatial
   guard track.count>2 else{return}
   let xs=track.map(\.x),ys=track.map(\.y);center=SIMD3(((xs.min() ?? 0)+(xs.max() ?? 0))/2,((ys.min() ?? 0)+(ys.max() ?? 0))/2,0);factor=0.55/max(1,max((xs.max() ?? 1)-(xs.min() ?? 0),(ys.max() ?? 1)-(ys.min() ?? 0)));baseZ=track.map(\.z).min() ?? 0
   let terrain=Diorama(track.map(project),world:CircuitWorld.forTitle(title),theme:theme)
-  let template = theme == .grandPrix ? Self.monacoTemplate : theme == .tron ? Self.monacoTronTemplate : nil
+  let template = theme == .grandPrix ? Self.monacoTemplate : theme == .tron ? Self.monacoTronTemplate : theme == .kart ? Self.monacoKartTemplate : nil
   let monaco = CircuitCatalog.all.first(where:{$0.id == "monaco"})?.track == track ? template?.clone(recursive:true) : nil
   if let monaco {
    // Asset is already normalized to the same 0.55 m catalog footprint.
-   monaco.name = theme == .tron ? "MonacoTronGeography" : "MonacoGrandPrixGeography"
+   monaco.name = theme == .tron ? "MonacoTronGeography" : theme == .kart ? "MonacoKartGeography" : "MonacoGrandPrixGeography"
    monaco.position.y = 0.006-baseZ*factor
    circuit.addChild(monaco)
   } else {circuit.addChild(terrain.mesh())}
@@ -66,11 +70,11 @@ import Spatial
   for i in track.indices {
    let a=project(track[i]),b=project(track[(i+1)%track.count])
    guard simd_distance(a,b)>0.00001 else{continue}
-   circuit.addChild(segment(a,b,width:theme == .tron ? 0.007:theme == .kart ? 0.014:monaco != nil ? 0.006:0.010,height:0.001,color:theme.road))
-   let d=simd_normalize(SIMD3(b.x-a.x,0,b.z-a.z)+SIMD3(0.000001,0,0));let side=SIMD3(-d.z,0,d.x)*(theme == .tron ? 0.005:theme == .kart ? 0.0085:monaco != nil ? 0.0038:0.0065)
+   circuit.addChild(segment(a,b,width:theme == .tron ? 0.007:theme == .kart ? (monaco != nil ? 0.0075:0.014):monaco != nil ? 0.006:0.010,height:0.001,color:theme.road))
+   let d=simd_normalize(SIMD3(b.x-a.x,0,b.z-a.z)+SIMD3(0.000001,0,0));let side=SIMD3(-d.z,0,d.x)*(theme == .tron ? 0.005:theme == .kart ? (monaco != nil ? 0.0042:0.0085):monaco != nil ? 0.0038:0.0065)
    let alternate=Int(distance/0.018)%2==0
-   let edge:UIColor=theme == .tron ? .cyan:theme == .kart ? (alternate ? .systemYellow:.systemRed):(alternate ? .white:.systemRed)
-   for sign:Float in [-1,1]{circuit.addChild(segment(a+side*sign,b+side*sign,width:theme == .tron ? 0.0008:monaco != nil ? 0.0012:0.0025,color:edge))}
+   let edge:UIColor=theme == .tron ? .cyan:theme == .kart ? (monaco != nil ? .white:(alternate ? .systemYellow:.systemRed)):(alternate ? .white:.systemRed)
+   for sign:Float in [-1,1]{circuit.addChild(segment(a+side*sign,b+side*sign,width:theme == .tron ? 0.0008:theme == .kart && monaco != nil ? 0.00055:monaco != nil ? 0.0012:0.0025,color:edge))}
    distance += simd_distance(a,b)
   }
   if theme != .tron && monaco == nil { addScenery(track.map(project),terrain:terrain) }

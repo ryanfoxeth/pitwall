@@ -13,5 +13,5 @@ enum RaceTheme: String, CaseIterable, Identifiable {
     } }
     var accent: Color { switch self { case .tron: .cyan; case .kart: .orange; case .grandPrix: .red; case .miniature: .mint } }
     var ground: UIColor { switch self { case .tron: UIColor(white:0.035,alpha:1); case .kart: UIColor(red:0.24,green:0.65,blue:0.25,alpha:1); case .miniature, .grandPrix: UIColor(red:0.13,green:0.28,blue:0.18,alpha:1) } }
-    var road: UIColor { switch self { case .tron: UIColor(white:0.09,alpha:1); case .kart: UIColor(red:0.44,green:0.40,blue:0.50,alpha:1); case .miniature, .grandPrix: UIColor(white:0.19,alpha:1) } }
+    var road: UIColor { switch self { case .tron: UIColor(white:0.09,alpha:1); case .kart: UIColor(red:0.28,green:0.29,blue:0.30,alpha:1); case .miniature, .grandPrix: UIColor(white:0.19,alpha:1) } }
 }

@@ -1,10 +1,12 @@
 # Monaco themed tabletop
 
-A compact, geographically aligned interpretation of Monaco, rather than a surveyed architectural model. Available in Tracks → Monaco → Grand Prix or Tron. Tron uses the identical geography and docked fleet with dark metallic surfaces, emissive cyan architecture, amber landmark/portal accents and a clipped harbor grid. Mini Kart and Miniature retain their existing scenery. The environment is deliberately restricted to the catalog coordinate frame; live/replay provider coordinates require an explicit registration before using it.
+A compact, geographically aligned interpretation of Monaco, rather than a surveyed architectural model. Available in Tracks → Monaco → Grand Prix, Tron or Retro Kart. Tron uses the identical geography and docked fleet with dark metallic surfaces, emissive cyan architecture, amber landmark/portal accents and a clipped harbor grid. Retro Kart reinterprets Monaco as a 64-bit-era coastal raceway: pixel-textured grass and stone, sand-colored shoulders, gray roads with white edges, bright toy yachts, red pitched roofs, twin casino turrets, chunky palms and checkerboard tunnel/start gantries. F1 Miniature retains its existing scenery. The environment is deliberately restricted to the catalog coordinate frame; live/replay provider coordinates require an explicit registration before using it.
 
 ![Grand Prix Blender preview](preview.png)
 
 ![Tron Blender preview](tron-preview.png)
+
+![Retro Kart Blender preview](kart-preview.png)
 
 ## Sources and rights
 
@@ -32,8 +34,13 @@ python tools/prepare_monaco.py osm.json relations.json Sources/Resources/Season2
 python tools/dress_monaco.py Assets/Monaco/MonacoGeography.json
 blender --background --factory-startup --python tools/build_monaco_blender.py -- Assets/Monaco/MonacoGeography.json Sources/Resources/MonacoGrandPrix.usdz preview.png
 blender --background --factory-startup --python tools/build_monaco_blender.py -- Assets/Monaco/MonacoGeography.json Sources/Resources/MonacoTron.usdz tron-preview.png tron
+blender --background --factory-startup --python tools/build_monaco_blender.py -- Assets/Monaco/MonacoGeography.json Sources/Resources/MonacoKart.usdz kart-preview.png kart
 ```
 
 The committed sanitized geographic JSON is sufficient for the Blender step; no network access or account is required. To refresh source extracts, use Overpass `out body geom` for ways tagged building, coastline, pier, marina or tunnel in bbox `(43.731,7.417,43.743,7.432)`, and the relations listed above. The preparation script strips unrelated metadata, including public contact fields.
 
 The asset is exported in meters, Y up, with the same 0.55 m normalization as `TableScene.project`. Runtime applies the shared elevation offset and fits the complete circuit environment to the current volume. It must not be independently renormalized as a vehicle model.
+
+## Retro Kart design direction
+
+The visual references were Mario Kart 64’s Royal Raceway, Luigi Raceway, Koopa Troopa Beach and Toad’s Turnpike. The bundled environment uses original procedural geometry and 32×32 nearest-filtered textures, not extracted game assets, characters, logos or screenshots. Geographic locations, dock assignments, elevation and shared tabletop fitting remain consistent with the other Monaco styles. Stylized roofs, turrets, colors and toy boats are artistic interpretations. Monaco’s road is kept narrow enough to pass inside its mapped tunnel rather than applying the wider generic kart road.

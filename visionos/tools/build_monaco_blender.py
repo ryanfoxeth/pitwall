@@ -4,7 +4,7 @@ Uses Blender Z up; exported Y up matches Pitwall's x,height,-north convention.
 """
 import bpy, json, sys, math, random
 from mathutils import Vector
-args=sys.argv[sys.argv.index('--')+1:];data=json.load(open(args[0]));output=args[1];preview=args[2];tron=len(args)>3 and args[3]=='tron'
+args=sys.argv[sys.argv.index('--')+1:];data=json.load(open(args[0]));output=args[1];preview=args[2];tron=len(args)>3 and args[3]=='tron';kart=len(args)>3 and args[3]=='kart'
 bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
 random.seed(17)
 track=data['track'];cx=(min(p[0] for p in track)+max(p[0] for p in track))/2;cy=(min(p[1] for p in track)+max(p[1] for p in track))/2
@@ -189,6 +189,94 @@ for x,y in [(-260,-310),(-260,-260),(-260,-210),(145,255),(155,272),(125,262),(6
  z=ground(x,y);cylinder('Palm trunk',(x,y,z+5),.7,10,'Terracotta',8)
  for j in range(6):
   a=j*math.pi/3;leaf=box('Palm frond',(x+math.cos(a)*2,y+math.sin(a)*2,z+10),(7,1.3,.6),'Foliage',a);leaf.rotation_euler.y=.22
+# Mini Kart is a geometry and material redesign over the same mapped geography.
+# Original artwork: no reference screenshots, logos or Nintendo models embedded.
+if kart:
+ palette={'Land':(.16,.64,.035),'Water':(.025,.48,.83),'Quay':(.91,.73,.37),'Limestone':(.73,.57,.33),'Ivory':(1,.84,.49),'Terracotta':(.80,.065,.025),'Slate':(.07,.25,.67),'Glass':(.06,.18,.37),'White':(.97,.97,.85),'Hull':(.91,.12,.065),'Gold':(1,.69,.015),'Foliage':(.06,.46,.015),'Red':(.9,.035,.025),'Asphalt':(.28,.29,.30),'Base':(.43,.26,.10),'Pool':(.025,.72,.90),'Teak':(.94,.68,.24),'Cushion':(.90,.07,.18),'PartyBlue':(.04,.30,.92),'Skin':(.85,.55,.32)}
+ for name,color in palette.items():
+  m=mats[name];m.diffuse_color=(*color,1);p=m.node_tree.nodes.get('Principled BSDF');p.inputs['Base Color'].default_value=(*color,1);p.inputs['Roughness'].default_value=.95;p.inputs['Metallic'].default_value=0
+ for name,color in [('KartPink',(.96,.39,.50)),('KartCream',(1,.90,.62)),('KartBlue',(.19,.46,.91)),('KartGreen',(.30,.73,.11))]:mat(name,color,.95)
+ # Remove miniature luxury details in favor of big readable toy silhouettes.
+ remove=('Facade window','Sun lounger','Cocktail bar','Canopy support','Party shade canopy','Party guest','Guest head','Radar mast','Satellite radar','Helipad','White deck overhang','Panoramic glass','White superstructure roof','Open party sun deck','Casino copper dome','Casino finial','Palm frond')
+ for o in list(bpy.context.scene.objects):
+  if o.name.startswith(remove):bpy.data.objects.remove(o,do_unlink=True)
+ def cone(name,p,r,h,m,vertices=8):
+  verts=[(p[0]+r*math.cos(i*2*math.pi/vertices),p[1]+r*math.sin(i*2*math.pi/vertices),p[2]) for i in range(vertices)]+[(p[0],p[1],p[2]+h)]
+  return mesh(name,verts,[tuple(range(vertices-1,-1,-1))]+[(i,(i+1)%vertices,vertices) for i in range(vertices)],m)
+ # Color-block city facades and red/blue oversized pitched roofs.
+ for i,o in enumerate([o for o in bpy.context.scene.objects if o.name.startswith('City ')]):o.data.materials[0]=mats[['KartCream','KartPink','KartBlue'][i%3]]
+ for b in data['buildings']:
+  p=b['footprint'];x=sum(a for a,_ in p)/len(p);y=sum(a for _,a in p)/len(p);z=b['base']-1.1+b['height']+.8
+  # Raised hip cap follows the mapped outline; exaggerated roof pitch is stylistic.
+  pp=p[:-1] if p[0]==p[-1] else p
+  if sum(pp[i][0]*pp[(i+1)%len(pp)][1]-pp[(i+1)%len(pp)][0]*pp[i][1] for i in range(len(pp)))<0:pp=list(reversed(pp))
+  n=len(pp);verts=[(a,c,z) for a,c in pp]+[(x,y,z+min(12,b['height']*.36))]
+  mesh('Toy red roof',verts,[(i,(i+1)%n,n) for i in range(n)],'Terracotta')
+ for l in data['landmarks']:
+  x,y=l['center'];z=l['base']-1
+  if l['kind']=='casino':
+   # Twin turrets echo the casino silhouette in a playful Royal Raceway idiom.
+   for a in [-21,21]:
+    angle=-.55;px=x-17+a*math.cos(angle);py=y+28+a*math.sin(angle)
+    cone('Casino red turret',(px,py,z+35),8,17,'Terracotta')
+    cylinder('Turret pennant pole',(px,py,z+54),.45,6,'White',6)
+    mesh('Turret racing pennant',[(px,py,z+56),(px+10,py,z+53),(px,py,z+51)],[(0,1,2),(2,1,0)],'Red')
+ # Wide colored hulls, one chunky cabin, blue windows, white roof and toy funnel.
+ hulls=[o for o in bpy.context.scene.objects if o.name.startswith('Megayacht hull')]
+ for i,o in enumerate(hulls):o.data.materials[0]=mats[['Hull','KartBlue','Gold','KartPink'][i%4]]
+ for i,b in enumerate(boats):
+  x,y,L,w,a=b['x'],b['y'],b['length'],b['width'],b['angle'];h=L*.042
+  box('Toy yacht cabin',(x,y,h+3),(L*.48,w*.72,5),'White',a)
+  box('Toy yacht blue window band',(x,y,h+4),(L*.50,w*.74,2),'Glass',a)
+  box('Toy yacht roof',(x,y,h+5.8),(L*.54,w*.83,1.6),'White',a)
+  box('Toy yacht funnel',(x+math.cos(a)*L*.12,y+math.sin(a)*L*.12,h+8),(L*.08,w*.32,4),'Red',a)
+ # Broad angular palm leaves and cypress silhouettes, kept on existing land.
+ for o in [o for o in bpy.context.scene.objects if o.name.startswith('Palm trunk')]:
+  x,y,z=o.location
+  for j in range(5):
+   a=j*2*math.pi/5;dx,dy=math.cos(a),math.sin(a);nx,ny=-dy,dx
+   verts=[(x,y,z+6),(x+dx*6+nx*3,y+dy*6+ny*3,z+7),(x+dx*13,y+dy*13,z+3),(x+dx*6-nx*3,y+dy*6-ny*3,z+7)]
+   mesh('Chunky palm canopy',verts,[(0,1,2,3),(3,2,1,0)],'Foliage')
+ for b in data['buildings'][::3]:
+  x,y=b['footprint'][0];z=b['base'];cone('Cypress crown',(x,y,z),5,20,'Foliage')
+ # Broad checkerboard tunnel portals read as arcade course architecture.
+ for end,neighbor in [(tunnel[0],tunnel[1]),(tunnel[-1],tunnel[-2])]:
+  dx,dy=neighbor[0]-end[0],neighbor[1]-end[1];a=math.atan2(dy,dx);nx,ny=-math.sin(a),math.cos(a);z=ground(*end)
+  for row in range(2):
+   for col in range(10):
+    t=(col-4.5)*2
+    box('Tunnel checker tile',(end[0]+nx*t,end[1]+ny*t,z+8.5+row*2),(2.2,2,2),'White' if (row+col)%2 else 'KartBlue',a)
+ # Checkerboard start gantry follows the circuit's starting tangent.
+ a,b=track[0],track[1];heading=math.atan2(b[1]-a[1],b[0]-a[0]);nx,ny=-math.sin(heading),math.cos(heading)
+ for side in [-1,1]:
+  box('Kart start post',(a[0]+nx*side*10,a[1]+ny*side*10,a[2]+7),(2,2,14),'Red')
+ for row in range(2):
+  for col in range(10):
+   t=(col-4.5)*2
+   box('Kart start checker',(a[0]+nx*t,a[1]+ny*t,a[2]+13+row*2),(2,2,2),'White' if (row+col)%2 else 'Glass',heading)
+ # Short graphic ripples stay inside the harbor; no decorative ocean outside it.
+ for x in range(int(min(p[0] for p in water))+12,int(max(p[0] for p in water))-12,24):
+  for y in range(int(min(p[1] for p in water))+12,int(max(p[1] for p in water))-12,35):
+   if inside((x-5,y),water) and inside((x+5,y),water):ribbon('Pixel wave',(x-5,y,-.6),(x+5,y,-.6),.8,.15,'Pool')
+ # Low-resolution repeating textures, authored procedurally, with explicit UVs
+ # and nearest filtering. Real image textures survive the USDZ export.
+ for name,repeat,noise in [('Land',18,.22),('Limestone',12,.15),('Quay',12,.09),('Water',26,.08)]:
+  m=mats[name];base=palette[name];img=bpy.data.images.new('Kart64_'+name,width=32,height=32);pixels=[]
+  rng=random.Random(64)
+  for j in range(32):
+   for i in range(32):
+    f=1+rng.uniform(-noise,noise)
+    if name=='Limestone' and (j%8==0 or (i+(4 if j//8%2 else 0))%12==0):f=.62
+    if name=='Water':f=1+(.10 if (j+i//9)%8==0 else -.04)
+    pixels.extend([min(1,max(0,c*f)) for c in base]+[1])
+  img.pixels=pixels;img.pack();tex=m.node_tree.nodes.new('ShaderNodeTexImage');tex.image=img;tex.interpolation='Closest';m.node_tree.links.new(tex.outputs['Color'],m.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
+  for o in bpy.context.scene.objects:
+   if o.type!='MESH' or not o.data.materials or o.data.materials[0]!=m:continue
+   uv=o.data.uv_layers.new(name='UVMap')
+   for face in o.data.polygons:
+    axis=max(range(3),key=lambda k:abs(face.normal[k]));axes=[k for k in range(3) if k!=axis]
+    for li in face.loop_indices:
+     v=o.data.vertices[o.data.loops[li].vertex_index].co+o.location;uv.data[li].uv=(v[axes[0]]/repeat,v[axes[1]]/repeat)
 # Theme pass uses the exact same geography and dock layout. Outline semantic
 # objects before batching, never triangulation diagonals or the terrain mesh.
 if tron:
@@ -249,7 +337,10 @@ bpy.ops.wm.usd_export(filepath=output,export_materials=True,generate_preview_sur
 # Preview includes the road for visual QA; road itself is generated by the app.
 for a,b in zip(track,track[1:]):
  aa=((a[0]-cx)*scale,(a[1]-cy)*scale,a[2]*scale);bb=((b[0]-cx)*scale,(b[1]-cy)*scale,b[2]*scale)
- ribbon('Preview road',aa,bb,.006,.0008,'Asphalt')
+ ribbon('Preview road',aa,bb,.0075 if kart else .006,.0008,'Asphalt')
+ if kart or tron:
+  d=Vector(bb)-Vector(aa);side=Vector((-d.y,d.x,0)).normalized()*(.0042 if kart else .005)
+  for sign in [-1,1]:ribbon('Preview edge',Vector(aa)+side*sign,Vector(bb)+side*sign,.00055 if kart else .0008,.0006,'White' if kart else 'NeonCyan')
 scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=32;scene.render.resolution_x=1600;scene.render.resolution_y=1600;scene.render.resolution_percentage=100
 scene.world.color=(.035,.035,.035) if tron else (.3,.3,.3)
 bpy.ops.object.light_add(type='AREA',location=(-.5,-.4,1.2));bpy.context.object.data.energy=8 if tron else 35;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=1

@@ -96,7 +96,7 @@ import RealityKit
  var failures:[String]=[]
  if scene.circuit.findEntity(named:"MonacoGrandPrixGeography") == nil {failures.append("Bundled Monaco environment failed to load")}
  var checks=0
- for environmentTheme in [RaceTheme.grandPrix, .tron] {
+ for environmentTheme in [RaceTheme.grandPrix, .tron, .kart] {
  race.theme=environmentTheme
  for angle in [0.0,Double.pi/4,Double.pi/2,Double.pi] {
   race.rotation=angle
@@ -112,6 +112,8 @@ import RealityKit
  }
  for theme in RaceTheme.allCases {
   race.theme=theme;scene.update(race)
+  let hasKart=scene.circuit.findEntity(named:"MonacoKartGeography") != nil
+  if hasKart != (theme == .kart) {failures.append("Incorrect Kart environment in \(theme)")}
   let hasTron=scene.circuit.findEntity(named:"MonacoTronGeography") != nil
   if hasTron != (theme == .tron) {failures.append("Incorrect Tron environment in \(theme)")}
   let hasEnvironment=scene.circuit.findEntity(named:"MonacoGrandPrixGeography") != nil
