@@ -14,7 +14,11 @@ for row in rows:
     points = row['points']
     assert len(points) > 50, row['id']
     assert all(len(p) == 3 and all(math.isfinite(x) for x in p) for p in points), row['id']
-    assert all(p[2] == 0 for p in points) and 'Flat' in row['elevation'], row['id']
+    if row['id'] == 'monaco':
+        assert 40 < max(p[2] for p in points)-min(p[2] for p in points) < 43
+        assert row['elevationSource']['survey_grade'] is False
+    else:
+        assert all(p[2] == 0 for p in points) and 'Flat' in row['elevation'], row['id']
     assert max(math.dist(a, b) for a, b in zip(points, points[1:] + points[:1])) < 25.01, row['id']
     assert all(min(p[i] for p in points) < max(p[i] for p in points) for i in (0, 1)), row['id']
-print('PASS: 23 circuits, 9 upcoming, finite closed geometry, <=25m segments, flat-elevation provenance')
+print('PASS: 23 circuits, 9 upcoming, finite closed geometry, <=25m segments, explicit elevation provenance')

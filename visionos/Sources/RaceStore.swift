@@ -24,7 +24,8 @@ struct Car: Identifiable {
     @Published var vehicleScale: Double = min(4,max(0.1,(UserDefaults.standard.object(forKey:"vehicle-scale") as? Double) ?? 1)) {
         didSet { UserDefaults.standard.set(vehicleScale,forKey:"vehicle-scale") }
     }
-    @Published var selectedCircuitID = CircuitCatalog.upcoming().first?.id ?? CircuitCatalog.all.first?.id ?? ""
+    @Published var automaticallySelectCircuit = true
+    @Published var selectedCircuitID = CircuitCatalog.automatic()?.id ?? ""
     @Published var cars: [Car] = []; @Published var track: [SIMD3<Float>] = []
     @Published var selected = 1; @Published var playing = false; @Published var time: Double = 0
     @Published var speed: Double = 1; @Published var duration: Double = 7200
@@ -54,7 +55,10 @@ struct Car: Identifiable {
     var highlights: Set<Int> { Set([leader, selected].compactMap { $0 }) }
     var currentLap: Int { cars.map(\.lap).max() ?? 0 }
     var key: String { get { Keychain.read() } set { Keychain.save(newValue) } }
-    init() { loadReplay() }
+    init() {
+     loadReplay()
+     if !ProcessInfo.processInfo.arguments.contains("--preview-tabletop") {mode="Tracks";switchMode()}
+    }
     func loadReplay() {
         do {
             guard let url = Bundle.main.url(forResource: "MadridReplay", withExtension: "json") else { throw CocoaError(.fileNoSuchFile) }
@@ -103,7 +107,7 @@ struct Car: Identifiable {
         if mode == "Live" { return liveBuffer.filter { $0.date > displayTime-5 && $0.date <= displayTime }.compactMap { $0.cars.first(where:{$0.id==n})?.point } }
         return stride(from:max(0,time-4),through:time,by:0.2).compactMap { sample(n,at:$0).0 }
     }
-    func switchMode() { lastTimingSecond = -1;playing=false; cars=[]; liveFrames=[];liveTrail=[:];liveBuffer=[];displayedSnapshot = -1;tvPaused=false;error=nil; if mode=="Replay" { track=replayTrack;title=replayTitle;updateReplay();status="HISTORICAL REPLAY" } else if mode=="Tracks" {feeds=[:];weather=[:];messages=[];if let c=CircuitCatalog.all.first(where:{$0.id==selectedCircuitID}) {track=c.track;title=c.circuit+" · "+c.location;status="TRACK PREVIEW · "+c.elevation} else {track=[];status="Select a circuit"}} else { track=[];status="Connecting to your server…";lastLive=0 } }
+    func switchMode() { lastTimingSecond = -1;playing=false; cars=[]; liveFrames=[];liveTrail=[:];liveBuffer=[];displayedSnapshot = -1;tvPaused=false;error=nil; if mode=="Replay" { track=replayTrack;title=replayTitle;updateReplay();status="HISTORICAL REPLAY" } else if mode=="Tracks" {if automaticallySelectCircuit,let c=CircuitCatalog.automatic() {selectedCircuitID=c.id};feeds=[:];weather=[:];messages=[];if let c=CircuitCatalog.all.first(where:{$0.id==selectedCircuitID}) {track=c.track;title=c.circuit+" · "+c.location;status="TRACK PREVIEW · "+c.elevation} else {track=[];status="Select a circuit"}} else { track=[];status="Connecting to your server…";lastLive=0 } }
     func fetchLive() async {
         guard !key.isEmpty else { status="Enter a scoped Pitwall device key to connect";return }
         do {
@@ -174,7 +178,7 @@ struct Car: Identifiable {
     }
     func run() async {
         guard !running else{return};running=true
-        let polling=Task {while !Task.isCancelled {if mode=="Live" {await fetchLive()}else{await loadTelemetry()};try? await Task.sleep(for:.seconds(2))}}
+        let polling=Task {while !Task.isCancelled {if mode=="Live" {await fetchLive()}else if mode=="Tracks" {refreshAutomaticCircuit()}else{await loadTelemetry()};try? await Task.sleep(for:.seconds(2))}}
         defer{running=false;polling.cancel()};var prev=Date()
         while !Task.isCancelled {
             let now=Date();let dt=now.timeIntervalSince(prev);prev=now
