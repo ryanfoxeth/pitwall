@@ -8,3 +8,5 @@
 - Formula-car geometry, tabletop scenery code and UI: project-authored. Retro Kart uses Kenney models, not Nintendo assets.
 
 - Bundled 2026 circuit reference outlines: https://github.com/bacinger/f1-circuits (MIT; `CircuitGeometryLicense.txt`). Circuit metadata from https://github.com/f1db/f1db (`F1DBLicense.txt`). Outlines projected to local meters and resampled. Twenty-two circuit outlines include approximate elevation derived from OpenF1 recorded location data (https://openf1.org/docs/#location); see `visionos/ELEVATION.md` and per-circuit `elevationSource` metadata for sessions, laps and validation. These profiles are not survey-grade; Sepang remains flat. Calendar snapshot from Jolpica on17 September2026.
+
+- Monaco Grand Prix environment: © OpenStreetMap contributors, ODbL 1.0 geographic database. See `visionos/Assets/Monaco/README.md` for sources, reproducible generation and accuracy limits. This geographic data is not relicensed under the repository MIT code license.

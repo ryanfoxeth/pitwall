@@ -49,6 +49,8 @@ struct ControlView: View {
    HStack{Text("Rotate");Slider(value:$race.rotation,in:-Double.pi...Double.pi)}
    Text("Resize the track using the volume’s corner handles. The entire model scales uniformly to fit; enlarge height and depth too if one dimension limits its size.").font(.caption).foregroundStyle(.secondary)
    DisclosureGroup("Model credits") {
+    Text("Monaco Grand Prix scenery: © OpenStreetMap contributors (ODbL). Original stylized landmarks and yachts. Approximate building heights and terrain; tunnel shown as a cutaway for visibility.").font(.caption)
+    Link("OpenStreetMap attribution",destination:URL(string:"https://www.openstreetmap.org/copyright")!)
     Text("Optional models: Tron Light Cycle by Firestar · Lightcycle by SpringSociety. CC BY 4.0. Adapted for Pitwall: normalized size/orientation, removed separate trail and converted to USDZ.").font(.caption)
     Link("Firestar — Tron Light Cycle",destination:URL(string:"https://sketchfab.com/3d-models/tron-light-cycle-083076c8a3644b088ce7f1e107a12ca6")!)
     Link("SpringSociety — Lightcycle",destination:URL(string:"https://sketchfab.com/3d-models/lightcycle-aaebbf5d4c504dbbb8963f3dd91b37c1")!)
@@ -77,13 +79,14 @@ struct ControlView: View {
     openWindow(id: "tabletop-resizable")
     try? await Task.sleep(for: .seconds(3)); record("reopened")
    }
+   if let i=ProcessInfo.processInfo.arguments.firstIndex(of:"--theme"),ProcessInfo.processInfo.arguments.count>i+1,let theme=RaceTheme(rawValue:ProcessInfo.processInfo.arguments[i+1]) {race.theme=theme}
    if ProcessInfo.processInfo.arguments.contains("--validate-track-isolation") {validateTrackIsolation(race)}
+   if ProcessInfo.processInfo.arguments.contains("--validate-monaco") {validateMonaco(race)}
    if ProcessInfo.processInfo.arguments.contains("--validate-volume") {validateVolume(race)}
    if ProcessInfo.processInfo.arguments.contains("--validate-circuits") {await validateCircuits(race)}
    if let i=ProcessInfo.processInfo.arguments.firstIndex(of:"--preview-circuit"),ProcessInfo.processInfo.arguments.count>i+1,let c=CircuitCatalog.all.first(where:{$0.id==ProcessInfo.processInfo.arguments[i+1]}) {race.previewCircuit(c);openWindow(id:"tabletop-resizable")}
    #endif
    if ProcessInfo.processInfo.arguments.contains("--preview-tabletop") {
-    if let i=ProcessInfo.processInfo.arguments.firstIndex(of:"--theme"),ProcessInfo.processInfo.arguments.count>i+1,let theme=RaceTheme(rawValue:ProcessInfo.processInfo.arguments[i+1]) {race.theme=theme}
     race.time=1800;race.updateReplay();race.playing = !ProcessInfo.processInfo.arguments.contains("--paused-preview")
     #if DEBUG
     if ProcessInfo.processInfo.arguments.contains("--validate-themes") {validateThemes(race)}

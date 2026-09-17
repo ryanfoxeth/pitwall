@@ -88,4 +88,33 @@ import RealityKit
  let url=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("track-isolation.json")
  try? JSONSerialization.data(withJSONObject:["passed":passed,"replaySamples":replaySamples.count,"checks":results],options:.prettyPrinted).write(to:url)
 }
+@MainActor func validateMonaco(_ race: RaceStore) {
+ guard let c=CircuitCatalog.all.first(where:{$0.id == "monaco"}) else {return}
+ race.previewCircuit(c);race.theme = .grandPrix
+ let scene=TableScene();scene.update(race)
+ var failures:[String]=[]
+ if scene.circuit.findEntity(named:"MonacoGrandPrixGeography") == nil {failures.append("Bundled Monaco environment failed to load")}
+ var checks=0
+ for angle in [0.0,Double.pi/4,Double.pi/2,Double.pi] {
+  race.rotation=angle
+  for size:SIMD3<Float> in [SIMD3(0.7,0.25,0.7),SIMD3(3,1,3),SIMD3(5.5,2,5.5)] {
+   scene.update(race)
+   let target=BoundingBox(min:-size/2,max:size/2);scene.fit(in:target)
+   let actual=scene.circuit.visualBounds(relativeTo:scene.coordinateRoot)
+   let ratios=actual.extents/size
+   if simd_length(actual.center)>0.002 || abs(max(ratios.x,max(ratios.y,ratios.z))-0.96)>0.002 {failures.append("Monaco failed fit at angle \(angle), size \(size)")}
+   checks+=1
+  }
+ }
+ for theme in RaceTheme.allCases {
+  race.theme=theme;scene.update(race)
+  let hasEnvironment=scene.circuit.findEntity(named:"MonacoGrandPrixGeography") != nil
+  if hasEnvironment != (theme == .grandPrix) {failures.append("Incorrect environment in \(theme)")}
+ }
+ race.rotation=0;race.theme = .grandPrix;scene.update(race)
+ let bounds=scene.circuit.visualBounds(relativeTo:scene.root)
+ if max(bounds.extents.x,bounds.extents.z)>0.70 {failures.append("Environment exceeds compact authored footprint: \(bounds.extents)")}
+ let url=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("monaco-validation.json")
+ try? JSONSerialization.data(withJSONObject:["passed":failures.isEmpty,"failures":failures,"rotationSizeChecks":checks,"themeSwitchChecks":4,"authoredBounds":[bounds.extents.x,bounds.extents.y,bounds.extents.z]]).write(to:url)
+}
 #endif
