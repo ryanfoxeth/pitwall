@@ -15,6 +15,7 @@ def mat(name,color,rough=.65,metal=0):
  m=bpy.data.materials.new(name);m.diffuse_color=(*color,1);m.use_nodes=True;p=m.node_tree.nodes.get('Principled BSDF');p.inputs['Base Color'].default_value=(*color,1);p.inputs['Roughness'].default_value=rough;p.inputs['Metallic'].default_value=metal;mats[name]=m;return m
 mat('Limestone',(0.76,.69,.56));mat('Ivory',(.91,.86,.73));mat('Terracotta',(.43,.20,.12));mat('Slate',(.12,.18,.20),.45)
 mat('Glass',(.055,.14,.19),.22,.2);mat('Water',(.015,.24,.32),.24,.25);mat('Land',(.49,.48,.39));mat('Quay',(.70,.69,.60));mat('White',(.96,.96,.91));mat('Hull',(.13,.19,.24),.4);mat('Gold',(.73,.52,.20),.32,.3);mat('Foliage',(.16,.30,.16));mat('Red',(.68,.045,.035));mat('Asphalt',(.10,.115,.12));mat('Base',(.055,.075,.085));mat('Pool',(.05,.53,.65),.2)
+mat('Teak',(.56,.34,.16));mat('Cushion',(.90,.36,.12));mat('PartyBlue',(.025,.42,.68));mat('Skin',(.72,.43,.28))
 def mesh(name,verts,faces,m):
  me=bpy.data.meshes.new(name);me.from_pydata(verts,[],faces);me.update();o=bpy.data.objects.new(name,me);bpy.context.collection.objects.link(o);o.data.materials.append(mats[m]);return o
 def box(name,p,size,m,angle=0):
@@ -63,7 +64,7 @@ for a,b in zip(water,water[1:]):
  ribbon('Stone harbor quay',(*a,1),(*b,1),3,4,'Quay')
 # Raised city blocks, roof lips, and sparse facade windows.
 for k,b in enumerate(data['buildings']):
- p=b['footprint'];z=b['base']-1.1;h=b['height'];poly('City '+str(b['osm']),p,z,h,'Ivory' if k%3 else 'Limestone');poly('Roof '+str(b['osm']),p,z+h,.8,'Terracotta' if k%4==0 else 'Slate')
+ p=b['footprint'];z=b['base']-1.1;h=b['height'];poly('City foundation',p,-3,z+3,'Limestone');poly('City '+str(b['osm']),p,z,h,'Ivory' if k%3 else 'Limestone');poly('Roof '+str(b['osm']),p,z+h,.8,'Terracotta' if k%4==0 else 'Slate')
  for a,c in zip(p,p[1:]):
   length=math.dist(a,c)
   if length<9:continue
@@ -74,6 +75,10 @@ for k,b in enumerate(data['buildings']):
 # Landmark footprint massing, with original silhouette details.
 for l in data['landmarks']:
  kind=l['kind'];p=l['footprint'];x,y=l['center'];z=l['base']-1
+ for tier in l.get('supportTiers',[]):
+  for triangle in tier['triangles']:
+   poly('Terraced retaining foundation',triangle,tier['bottom'],tier['top']-tier['bottom']+.08,'Limestone')
+   poly('Retaining wall coping',triangle,tier['top'],.35,'Quay')
  if kind=='fairmont':
   # Open roof and low terraces keep the tunnel and hairpin readable.
   for part in l['renderTriangles']:
@@ -116,27 +121,48 @@ def inside(p,poly):
  for a,b in zip(poly,poly[1:]):
   if (a[1]>y)!=(b[1]>y) and x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]:c=not c
  return c
-boats=[]
-def yacht(x,y,angle,length):
- w=length*.25;h=1.4
+boats=data['partyYachts']
+def yacht(x,y,angle,length,w,style):
+ h=length*.042
  def at(a,b,z):return (x+a*math.cos(angle)-b*math.sin(angle),y+a*math.sin(angle)+b*math.cos(angle),z)
- outline=[(-length*.48,-w*.45),(-length*.48,w*.45),(length*.23,w*.5),(length*.52,0),(length*.23,-w*.5)]
- pp=[at(a,b,0)[:2] for a,b in outline];poly('Yacht hull',pp,0,h,'White')
- box('Yacht cabin',at(-length*.07,0,2.5),(length*.50,w*.72,2.4),'White',angle)
- box('Yacht windows',at(-length*.07,0,3.4),(length*.43,w*.74,.8),'Glass',angle)
- box('Yacht sun deck',at(-length*.06,0,4.1),(length*.33,w*.60,.5),'White',angle)
+ def deckbox(name,a,b,z,size,m):return box(name,at(a,b,z),size,m,angle)
+ outline=[(-length*.50,-w*.46),(-length*.50,w*.46),(length*.22,w*.5),(length*.54,0),(length*.22,-w*.5)]
+ pp=[at(a,b,0)[:2] for a,b in outline]
+ poly('Megayacht hull',pp,-.3,h,'White' if style%3 else 'Hull')
+ poly('Teak promenade deck',pp,h-.1,.5,'Teak')
+ # Stepped decks and continuous dark glazing remain readable at tabletop scale.
+ for level in range(3 if length>60 else 2):
+  z=h+1+level*2.7
+  deckbox('White deck overhang',-.02*length,0,z,(length*(.69-level*.12),w*(.93-level*.12),.65),'White')
+  deckbox('Panoramic glass',.025*length,0,z+1.35,(length*(.52-level*.10),w*(.75-level*.12),2),'Glass')
+  deckbox('White superstructure roof',.025*length,0,z+2.5,(length*(.55-level*.10),w*(.79-level*.12),.5),'White')
+ top=h+1+(2 if length>60 else 1)*2.7+2.9
+ deckbox('Open party sun deck',-.09*length,0,top,(length*.38,w*.58,.45),'Teak')
+ deckbox('Radar mast',.12*length,0,top+2,(.8,.8,4),'White')
+ for side in [-1,1]:
+  deckbox('Satellite radar',.10*length,side*w*.20,top+1,(1.5,1.5,1.8),'White')
+ # Stern pool, bathing platform, sun beds and colored party furniture.
+ deckbox('Stern beach club',-.46*length,0,h+.5,(length*.12,w*.86,.6),'White')
+ deckbox('Turquoise pool',-.35*length,0,h+.65,(length*.12,w*.50,.25),'Pool')
+ for side in [-1,1]:
+  for j in range(3):deckbox('Sun lounger',(-.25+j*.075)*length,side*w*.32,h+1,(length*.05,w*.12,.7),'Cushion' if style%2 else 'White')
+ # Canopy, cocktail bar and guests: stylized decorative details, not telemetry.
+ deckbox('Cocktail bar',-.015*length,0,top+1.1,(length*.09,w*.32,1.3),'White')
+ for side in [-1,1]:
+  deckbox('Canopy support',-.20*length,side*w*.22,top+1.9,(.45,.45,3.8),'White')
+ deckbox('Party shade canopy',-.20*length,0,top+3.8,(length*.17,w*.54,.4),'White')
+ for j in range(6 if length<60 else 12):
+  a=(-.27+random.random()*.36)*length;b=(random.random()-.5)*w*.45
+  deckbox('Party guest',a,b,top+1.0,(.8,.8,1.5),'PartyBlue' if j%3 else 'Red')
+  deckbox('Guest head',a,b,top+1.95,(.65,.65,.65),'Skin')
+ if length>=80:
+  # Bow helipad and oversized H marking.
+  deckbox('Helipad',.33*length,0,h+.6,(length*.15,w*.58,.25),'Slate')
+  for side in [-1,1]:deckbox('Helipad H',.33*length,side*w*.12,h+.8,(length*.095,.7,.12),'White')
+  deckbox('Helipad H crossbar',.33*length,0,h+.8,(.7,w*.28,.12),'White')
 for pier in data['piers']:
- for a,b in zip(pier['points'],pier['points'][1:]):
-  ribbon('Marina jetty',(*a,.5),(*b,.5),2.5,1,'Quay');dx=b[0]-a[0];dy=b[1]-a[1];length=math.hypot(dx,dy)
-  if length<18:continue
-  for d in range(12,int(length)-5,24):
-   for side in [-1,1]:
-    x=a[0]+dx*d/length-dy/length*side*12;y=a[1]+dy*d/length+dx/length*side*12
-    if inside((x,y),water) and min([math.hypot(x-u,y-v) for u,v in boats]+[100])>19:
-     boats.append((x,y));yacht(x,y,math.atan2(dy,dx)+side*math.pi/2,random.uniform(17,27))
-# A few superyachts in the inner basin, with generous spacing.
-for x,y,angle in [(40,-240,1.35),(100,-295,1.35),(-65,-260,1.35)]:
- if inside((x,y),water):yacht(x,y,angle,48)
+ for a,b in zip(pier['points'],pier['points'][1:]):ribbon('Marina jetty',(*a,.5),(*b,.5),2.5,1,'Quay')
+for boat in boats:yacht(boat['x'],boat['y'],boat['angle'],boat['length'],boat['width'],boat['style'])
 # Trackside palms at the waterfront and casino square.
 for x,y in [(-260,-310),(-260,-260),(-260,-210),(145,255),(155,272),(125,262),(65,26),(105,35)]:
  z=ground(x,y);cylinder('Palm trunk',(x,y,z+5),.7,10,'Terracotta',8)

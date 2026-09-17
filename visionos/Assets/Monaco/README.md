@@ -17,7 +17,7 @@ Geographic database: **© OpenStreetMap contributors**, extracted 17 September 2
 - 45 nearby building footprints and 21 pier geometries retain their OSM IDs in the JSON.
 - Circuit outline/elevation: the existing `Season2026.json`, with provenance documented in `../../ELEVATION.md` and repository `THIRD_PARTY.md`.
 
-Heights from OSM are used where available, otherwise estimated. Heights are limited to 6–48 m for tabletop legibility. Terrain between roads is interpolated, not surveyed. Casino towers, hotel roofs, windows, palm trees and yachts are original stylized approximations. Yacht positions are decorative, not live vessel data. The tunnel is represented with open beams so cars remain visible. No Google imagery or extracted Google geometry is included.
+Heights from OSM are used where available, otherwise estimated. Heights are limited to 6–48 m for tabletop legibility. Terrain between roads is interpolated, not surveyed. Casino towers, hotel roofs, windows, palm trees and yachts are original stylized approximations. The densely dressed harbor contains 103 yachts, including 35 vessels 72–100 m long, with pools, stepped decks, lounges, canopies, guests and large-yacht helipads. Yacht positions are decorative, not live vessel data or actual berth assignments. Hull clearance is checked against the mapped water, piers and other vessels. Casino and Hôtel de Paris have stepped retaining foundations; surrounding buildings have supporting bases. These are visual corrections, not surveyed foundation geometry. The tunnel is represented with open beams so cars remain visible. No Google imagery or extracted Google geometry is included.
 
 ## Rebuild
 
@@ -27,6 +27,7 @@ Python 3 with numpy and Shapely 2.1+, Blender 5.2. Run from `visionos`:
 
 ```sh
 python tools/prepare_monaco.py osm.json relations.json Sources/Resources/Season2026.json Assets/Monaco/MonacoGeography.json
+python tools/dress_monaco.py Assets/Monaco/MonacoGeography.json
 blender --background --factory-startup --python tools/build_monaco_blender.py -- Assets/Monaco/MonacoGeography.json Sources/Resources/MonacoGrandPrix.usdz preview.png
 ```
 
