@@ -10,7 +10,7 @@ enum Panel: String, CaseIterable, Codable, Identifiable {
         Window("Pitwall", id: "controls") { ControlView().environmentObject(race).task { race.start() } }
             .defaultSize(width: 620, height: 680)
         Window("Tabletop", id: "tabletop-resizable") { TabletopView().environmentObject(race)
-            .ornament(attachmentAnchor: .scene(.bottom)) { ControlsButton().padding(12).glassBackgroundEffect() }
+            .ornament(attachmentAnchor: .scene(.bottom)) { TabletopControls().environmentObject(race).padding(12).glassBackgroundEffect() }
         }
             .windowStyle(.volumetric).windowResizability(.contentSize)
             .defaultSize(width: 0.7, height: 0.25, depth: 0.7, in: .meters)

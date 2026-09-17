@@ -153,3 +153,21 @@ struct ControlsButton: View {
    .accessibilityHint("Reopen Pitwall settings and playback controls")
  }
 }
+
+/// These controls stay attached to the volume and never open another window.
+struct TabletopControls: View {
+ @EnvironmentObject private var race: RaceStore
+ var body: some View {
+  HStack(spacing: 12) {
+   Button { rotate(-1) } label: { Image(systemName: "rotate.left") }
+    .accessibilityLabel("Rotate track left 15 degrees")
+   Button { rotate(1) } label: { Label("Rotate", systemImage: "rotate.right") }
+    .accessibilityLabel("Rotate track right 15 degrees")
+   ControlsButton()
+  }
+ }
+ private func rotate(_ direction: Double) {
+  let angle = race.rotation + direction * .pi / 12
+  race.rotation = atan2(sin(angle), cos(angle))
+ }
+}
