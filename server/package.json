@@ -1,0 +1,21 @@
+{
+  "name": "pitwall-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "mqtt": "^5.15.2",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "express-session": "^1.18.1"
+  }
+}

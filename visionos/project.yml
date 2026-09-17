@@ -1,0 +1,22 @@
+name: PitwallVision
+options:
+  bundleIdPrefix: com.example
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    CODE_SIGN_STYLE: Automatic
+    XROS_DEPLOYMENT_TARGET: '2.0'
+targets:
+  PitwallVision:
+    type: application
+    platform: visionOS
+    deploymentTarget: '2.0'
+    sources:
+      - path: Sources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.PitwallVision
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: Pitwall
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES

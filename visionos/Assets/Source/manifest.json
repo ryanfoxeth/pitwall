@@ -1,0 +1,58 @@
+[
+  {
+    "name": "Kart",
+    "source": "tools/asset-cache/car-kit/Models/GLB format/kart-oobi.glb",
+    "pack": "car-kit",
+    "license": "CC0",
+    "meshes": 6,
+    "polygons": 2884
+  },
+  {
+    "name": "Tree",
+    "source": "tools/asset-cache/nature-kit/Models/GLTF format/tree_oak.glb",
+    "pack": "nature-kit",
+    "license": "CC0",
+    "meshes": 1,
+    "polygons": 196
+  },
+  {
+    "name": "Pine",
+    "source": "tools/asset-cache/nature-kit/Models/GLTF format/tree_pineTallA.glb",
+    "pack": "nature-kit",
+    "license": "CC0",
+    "meshes": 1,
+    "polygons": 78
+  },
+  {
+    "name": "Bush",
+    "source": "tools/asset-cache/nature-kit/Models/GLTF format/plant_bushLarge.glb",
+    "pack": "nature-kit",
+    "license": "CC0",
+    "meshes": 1,
+    "polygons": 60
+  },
+  {
+    "name": "Mushroom",
+    "source": "tools/asset-cache/nature-kit/Models/GLTF format/mushroom_redGroup.glb",
+    "pack": "nature-kit",
+    "license": "CC0",
+    "meshes": 1,
+    "polygons": 144
+  },
+  {
+    "name": "Rock",
+    "source": "tools/asset-cache/nature-kit/Models/GLTF format/rock_largeA.glb",
+    "pack": "nature-kit",
+    "license": "CC0",
+    "meshes": 1,
+    "polygons": 80
+  },
+  {
+    "name": "Palm",
+    "source": "tools/asset-cache/nature-kit/Models/GLTF format/tree_palm.glb",
+    "pack": "nature-kit",
+    "license": "CC0",
+    "meshes": 1,
+    "polygons": 186
+  }
+]

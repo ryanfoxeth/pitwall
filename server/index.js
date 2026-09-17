@@ -1,0 +1,11 @@
+import express from 'express';
+import makeRouter from './routes/pitwall.js';
+import { PitwallService } from './lib/pitwall.js';
+const key=process.env.PITWALL_KEY;
+if (!key || key.length<32 || !process.env.PITWALL_DEVICE_KEY || process.env.PITWALL_DEVICE_KEY.length<32) throw Error('Set unique PITWALL_KEY and PITWALL_DEVICE_KEY values (32+ characters).');
+const app=express();
+app.disable('x-powered-by');
+app.get('/health',(_req,res)=>res.json({ok:true}));
+app.use('/api/f1',makeRouter({service:new PitwallService(),key}));
+const server=app.listen(Number(process.env.PORT)||3000,process.env.HOST||'127.0.0.1',()=>console.log('Pitwall listening'));
+process.on('SIGTERM',()=>server.close(()=>process.exit(0)));

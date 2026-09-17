@@ -1,0 +1,16 @@
+**/node_modules/
+**/.env
+**/.env.*
+!**/.env.example
+**/DerivedData/
+**/build/
+**/xcuserdata/
+**/*.xcuserstate
+**/.DS_Store
+visionos/Sources/Resources/MadridReplay.json
+visionos/tools/cache/
+visionos/tools/asset-cache/
+visionos/Assets/Source/Lightcycles/
+visionos/Sources/Resources/Models/Cycle*.usdz
+visionos/Evidence/
+visionos/PitwallVision.xcodeproj/
