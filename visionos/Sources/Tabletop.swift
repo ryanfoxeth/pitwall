@@ -4,12 +4,12 @@ import UIKit
 import Spatial
 
 @MainActor final class TableScene:ObservableObject {
+ let coordinateRoot=Entity()
  let presentation=Entity()
  let circuit=Entity()
- init() { presentation.addChild(root) }
+ init() { coordinateRoot.addChild(presentation); presentation.addChild(root) }
  let root=Entity();var bikes:[Int:Entity]=[:];var trails:[ModelEntity]=[];var lastTrack:[SIMD3<Float>]=[];var theme:RaceTheme = .tron;var lastColors:[Int:UIColor]=[:];var lastTitle="";var previousHeading:[Int:Float]=[:];var lastFrameTime=Date();var vehicleRoles:[Int:String]=[:]
  var lastFitDiagnostic = ""
- var lastFitDiagnosticTime = Date.distantPast
  var center=SIMD3<Float>.zero;var factor:Float=1;var baseZ:Float=0
  func fit(in available: BoundingBox) {
   guard available.extents.x > 0.05, available.extents.y > 0.01, available.extents.z > 0.05 else { return }
@@ -26,8 +26,7 @@ import Spatial
   presentation.position = available.center-bounds.center*scale
   #if DEBUG
   let diagnostic = "target=\(available)\nmodel=\(bounds)\nscale=\(scale)\nposition=\(presentation.position)\ntrack=\(lastTitle)\n"
-  if diagnostic != lastFitDiagnostic, Date().timeIntervalSince(lastFitDiagnosticTime) > 2 {
-   lastFitDiagnosticTime = Date()
+  if diagnostic != lastFitDiagnostic {
    lastFitDiagnostic = diagnostic
    let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("tabletop-fit.txt")
    try? diagnostic.write(to: url, atomically: true, encoding: .utf8)
@@ -243,7 +242,7 @@ struct TabletopView:View {
  var body:some View {
   GeometryReader3D { geometry in
    RealityView {content in
-    content.add(scene.presentation)
+    content.add(scene.coordinateRoot)
     scene.update(race)
     fit(content, geometry: geometry)
    } update:{content in
@@ -260,7 +259,9 @@ struct TabletopView:View {
  }
  private func fit(_ content: RealityViewContent, geometry: GeometryProxy3D) {
   let frame = volumeFrame.size.width > 0 ? volumeFrame : geometry.frame(in: .local)
-  let available = content.convert(frame, from: .local, to: .scene)
+  // Convert directly to the parent we position in; scene origin and the
+  // RealityView root origin need not coincide in a volumetric window.
+  let available = content.convert(frame, from: .local, to: scene.coordinateRoot)
   scene.fit(in: available)
 
  }
