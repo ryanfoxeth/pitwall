@@ -17,6 +17,9 @@ struct ControlView: View {
    TextField("https://your-server.example/api/f1/device",text:$race.serverURL).textInputAutocapitalization(.never).autocorrectionDisabled()
    Picker("Source",selection:$race.mode){Text("Historical replay").tag("Replay");Text("Live server").tag("Live");Text("Track library").tag("Tracks")}.pickerStyle(.segmented).onChange(of:race.mode){race.switchMode()}
    if race.mode=="Replay" {
+    ReplayLibraryView()
+    Text(race.replayNotice).font(.caption).foregroundStyle(.orange)
+    if race.replayCoverage<0.9 {Button("Next recorded positions") {if let t=race.locations.values.flatMap({$0}).filter({$0[0]>race.time+5}).map({$0[0]}).min(){race.time=t;race.updateReplay()}}}
     HStack {Button(race.playing ? "Pause":"Play",systemImage:race.playing ? "pause.fill":"play.fill"){race.playing.toggle()};Picker("Speed",selection:$race.speed){ForEach([0.5,1,2,4,8],id:\.self){Text("\($0,specifier:"%g")×").tag($0)}}}
     Slider(value:$race.time,in:0...max(1,race.duration)).onChange(of:race.time){if !race.playing {race.updateReplay()}}
     HStack{Text(Duration.seconds(race.time).formatted(.time(pattern:.minuteSecond)));Spacer();Text("Lap \(race.currentLap)");Spacer();Text(Duration.seconds(race.duration).formatted(.time(pattern:.minuteSecond)))}.monospacedDigit()
@@ -80,6 +83,8 @@ struct ControlView: View {
     try? await Task.sleep(for: .seconds(3)); record("reopened")
    }
    if let i=ProcessInfo.processInfo.arguments.firstIndex(of:"--theme"),ProcessInfo.processInfo.arguments.count>i+1,let theme=RaceTheme(rawValue:ProcessInfo.processInfo.arguments[i+1]) {race.theme=theme}
+   if ProcessInfo.processInfo.arguments.contains("--replay-2025"),let url=Bundle.main.url(forResource:"Monaco2025Replay",withExtension:"json"),let data=try? Data(contentsOf:url){try? race.loadReplay(data:data)}
+   if ProcessInfo.processInfo.arguments.contains("--validate-replay") {validateReplay(race)}
    if ProcessInfo.processInfo.arguments.contains("--validate-track-isolation") {validateTrackIsolation(race)}
    if ProcessInfo.processInfo.arguments.contains("--validate-monaco") {validateMonaco(race)}
    if ProcessInfo.processInfo.arguments.contains("--validate-volume") {validateVolume(race)}
@@ -87,7 +92,8 @@ struct ControlView: View {
    if let i=ProcessInfo.processInfo.arguments.firstIndex(of:"--preview-circuit"),ProcessInfo.processInfo.arguments.count>i+1,let c=CircuitCatalog.all.first(where:{$0.id==ProcessInfo.processInfo.arguments[i+1]}) {race.previewCircuit(c);openWindow(id:"tabletop-resizable")}
    #endif
    if ProcessInfo.processInfo.arguments.contains("--preview-tabletop") {
-    race.time=1800;race.updateReplay();race.playing = !ProcessInfo.processInfo.arguments.contains("--paused-preview")
+    race.mode="Replay";race.switchMode()
+    race.time=race.replaySession=="11299" ? 200:1800;race.updateReplay();race.playing = !ProcessInfo.processInfo.arguments.contains("--paused-preview")
     #if DEBUG
     if ProcessInfo.processInfo.arguments.contains("--validate-themes") {validateThemes(race)}
     #endif

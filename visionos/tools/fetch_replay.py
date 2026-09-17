@@ -24,6 +24,9 @@ session=fetch('sessions',{'session_key':SESSION})[0];start=ts(session['date_star
 for topic in ['drivers','laps','stints','race_control','weather','pit','position','intervals','session_result','team_radio','overtakes']:
  try:feeds[topic]=fetch(topic,{'session_key':SESSION});print(topic,len(feeds[topic]),flush=True)
  except Exception as e:feeds[topic]=[];print(topic,str(e),flush=True)
+finish=[ts(r["date"]) for r in feeds.get("race_control",[]) if r.get("message")=="SESSION FINISHED"]
+last_lap=max([ts(r["date_start"])+r["lap_duration"] for r in feeds.get("laps",[]) if r.get("date_start") and r.get("lap_duration")] or [end])
+end=max(max(finish),last_lap)+15 if finish else max(end,last_lap+15)
 locations=[]
 for sec in range(0,int(end-start),300):
  q={'session_key':SESSION,'date>':datetime.fromtimestamp(start+sec-0.001).isoformat()+'Z','date<':datetime.fromtimestamp(min(end,start+sec+300)).isoformat()+'Z'}
@@ -34,6 +37,7 @@ for sec in range(0,int(end-start),300):
 # Compact position samples at 1Hz, keeping observed timestamps and actual source coordinates.
 loc={};last={}
 for r in sorted(locations,key=lambda x:x['date']):
+ if r.get('x')==0 and r.get('y')==0 and r.get('z')==0:continue
  n=str(r['driver_number']);t=ts(r['date'])-start;bucket=int(t)
  if last.get(n)==bucket:continue
  last[n]=bucket;loc.setdefault(n,[]).append([round(t,3),r['x'],r['y'],r['z']])
@@ -44,5 +48,5 @@ for topic,rows in feeds.items():
  for r in rows:
   for k in ['date','date_start','date_end']:
    if r.get(k):r[k+'_seconds']=round(ts(r[k])-start,3)
-archive={'session':session,'duration':min(end-start,max(p[0] for samples in loc.values() for p in samples)),'locations':loc,'track':track,'feeds':feeds,'provenance':'User-downloaded OpenF1 historical session. Positions sampled at 1 Hz; interpolated only across gaps <= 5s. Recorded XYZ are approximate, not survey geometry.'}
-out=P/'Sources/Resources/MadridReplay.json';out.write_text(json.dumps(archive,separators=(',',':')));print('DONE',out.stat().st_size,flush=True)
+archive={'session':session,'duration':end-start,'locations':loc,'track':track,'feeds':feeds,'provenance':'User-downloaded OpenF1 historical session. Positions sampled at 1 Hz; interpolated only across gaps <= 5s. Recorded XYZ are approximate, not survey geometry.'}
+out=Path(sys.argv[2]) if len(sys.argv)>2 else P/'Sources/Resources/MadridReplay.json';out.parent.mkdir(parents=True,exist_ok=True);out.write_text(json.dumps(archive,separators=(',',':')));print('DONE',out.stat().st_size,flush=True)

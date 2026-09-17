@@ -16,3 +16,5 @@ visionos/Evidence/
 visionos/PitwallVision.xcodeproj/
 
 **/__pycache__/
+
+visionos/Sources/Resources/Monaco*Replay.json

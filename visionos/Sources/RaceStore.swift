@@ -49,6 +49,8 @@ struct Car: Identifiable {
     func start() { if runner == nil { runner = Task { await run() } } }
     var telemetryBusy = false
     var lastTimingSecond = -1
+    @Published var replayNotice=""
+    var replayCoverage=0.0
     var replaySession = ""; var replayStart: Double = 0; var replayTitle = "Local replay"
     var replayTrack: [SIMD3<Float>] = []; var lastLive: Double = 0; var running = false
     var leader: Int? { cars.filter { $0.position == 1 }.first?.id }
@@ -60,19 +62,33 @@ struct Car: Identifiable {
      if !ProcessInfo.processInfo.arguments.contains("--preview-tabletop") {mode="Tracks";switchMode()}
     }
     func loadReplay() {
-        do {
-            guard let url = Bundle.main.url(forResource: "MadridReplay", withExtension: "json") else { throw CocoaError(.fileNoSuchFile) }
-            let root = try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as! Row
+        let saved=UserDefaults.standard.string(forKey:"replay-file").flatMap{FileManager.default.urls(for:.documentDirectory,in:.userDomainMask).first?.appendingPathComponent("Replays/"+$0+".json")}
+        let alternate=UserDefaults.standard.string(forKey:"replay-file")=="9979" ? Bundle.main.url(forResource:"Monaco2025Replay",withExtension:"json"):nil
+        let url = [saved,alternate,Bundle.main.url(forResource:"MonacoReplay",withExtension:"json"),Bundle.main.url(forResource:"MadridReplay",withExtension:"json")].compactMap{$0}.first{FileManager.default.fileExists(atPath:$0.path)}
+        do {guard let url else{throw CocoaError(.fileNoSuchFile)};try loadReplay(data:Data(contentsOf:url))}
+        catch {status="Select a session to download its replay"}
+    }
+    func loadReplay(data:Data) throws {
+        guard let root=try JSONSerialization.jsonObject(with:data) as? Row,
+              let samples=root["locations"] as? [String:[[Double]]],samples.values.contains(where:{$0.contains(where:{$0.count==4 && $0.allSatisfy(\.isFinite) && ($0[1] != 0 || $0[2] != 0 || $0[3] != 0)})}),num(root["duration"])>0,num(root["duration"]).isFinite,
+              let outline=root["track"] as? [[Double]],outline.count>3,outline.allSatisfy({$0.count==3 && $0.allSatisfy(\.isFinite)}) else{throw URLError(.cannotParseResponse)}
             let session=root["session"] as? Row ?? [:]
             replaySession=String(Int(num(session["session_key"])));replayStart=stamp(session["date_start"]) ?? 0
-            replayTitle="\(text(session["location"])) · \(text(session["session_name"]))"
+            replayTitle="\(text(session["location"])) · \(text(session["session_name"])) · \(Int(num(session["year"])))"
             title=replayTitle
+            locations=[:];telemetryCache=[:];lastTimingSecond = -1
             duration = num(root["duration"]); replayFeeds = root["feeds"] as? [String:[Row]] ?? [:]; drivers = replayFeeds["drivers"] ?? []
-            for (n, p) in root["locations"] as? [String:[[Double]]] ?? [:] { if let id = Int(n) { locations[id] = p } }
+            for (n, p) in root["locations"] as? [String:[[Double]]] ?? [:] { if let id = Int(n) { locations[id] = p.filter{$0.count==4 && $0.allSatisfy(\.isFinite) && ($0[1] != 0 || $0[2] != 0 || $0[3] != 0)}.sorted{$0[0]<$1[0]} } }
             replayTrack = (root["track"] as? [[Double]] ?? []).map { SIMD3(Float($0[0]),Float($0[1]),Float($0[2])) }
             for topic in replayFeeds.keys { replayFeeds[topic]?.sort { num($0["date_seconds"] ?? $0["date_start_seconds"]) < num($1["date_seconds"] ?? $1["date_start_seconds"]) } };selected = drivers.first(where: { $0["name_acronym"] as? String == "VER" }).map { Int(num($0["driver_number"])) } ?? Int(num(drivers.first?["driver_number"]))
             track = replayTrack; time = max(0,(replayFeeds["laps"] ?? []).filter{num($0["lap_number"]) == 2}.compactMap{$0["date_start_seconds"] as? Double}.min() ?? 120); updateReplay(); status = "HISTORICAL REPLAY · recorded positions"
-        } catch { status = "No local replay — configure your server or download a replay" }
+        if let registration=root["registration"] as? Row,let id=registration["circuit_id"] as? String,let c=CircuitCatalog.all.first(where:{$0.id==id}) {replayTrack=c.track;track=c.track}
+        if !locations.values.contains(where:{$0.contains(where:{abs($0[0]-time)<5})}) {time=locations.values.compactMap{$0.first?.first}.min() ?? 0}
+        UserDefaults.standard.set(replaySession,forKey:"replay-file")
+        let covered=locations.values.map{samples in zip(samples,samples.dropFirst()).reduce(0.0){$0+min(1.1,max(0,$1.1[0]-$1.0[0]))}}.max() ?? 0
+        replayCoverage = min(1,max(0,covered/max(1,duration)))
+        replayNotice = replayCoverage<0.9 ? "Partial position coverage: \(Int(replayCoverage*100))%. Cars disappear during missing observations; timing continues." : "Recorded positions · all panels share the replay clock."
+        if let missing=root["missingFeeds"] as? [String],!missing.isEmpty {replayNotice += " Missing feeds: \(missing.joined(separator:", "))."}
     }
     func sample(_ n: Int, at t: Double) -> (SIMD3<Float>?, Float) {
         RaceMath.sample(locations[n] ?? [], at: t)
@@ -141,12 +157,12 @@ struct Car: Identifiable {
     }
     func loadTelemetry() async {
         guard mode=="Replay",!telemetryBusy,telemetryCache[telemetryID()]==nil else{return}
-        telemetryBusy=true;defer{telemetryBusy=false};let id=telemetryID();let driver=selected;let block=floor(time/30)*30
+        telemetryBusy=true;defer{telemetryBusy=false};let sessionID=replaySession;let id=telemetryID();let driver=selected;let block=floor(time/30)*30
         let start=replayStart
         guard start>0,!replaySession.isEmpty else{return}
         let formatter=ISO8601DateFormatter();var url=URLComponents(string:"https://api.openf1.org/v1/car_data")!
         url.queryItems=[URLQueryItem(name:"session_key",value:replaySession),URLQueryItem(name:"driver_number",value:String(driver)),URLQueryItem(name:"date>",value:formatter.string(from:Date(timeIntervalSince1970:start+block-1))),URLQueryItem(name:"date<",value:formatter.string(from:Date(timeIntervalSince1970:start+block+30)))]
-        do {let (data,response)=try await URLSession.shared.data(from:url.url!);guard (response as? HTTPURLResponse)?.statusCode==200 else{return};var rows=try JSONSerialization.jsonObject(with:data) as? [Row] ?? [];for i in rows.indices{rows[i]["t"]=(stamp(rows[i]["date"]) ?? start)-start};rows.sort{num($0["t"])<num($1["t"])};telemetryCache[id]=rows;if telemetryCache.count>30{telemetryCache=Dictionary(uniqueKeysWithValues:Array(telemetryCache.prefix(15)))};applyTelemetry()}catch{}
+        do {let (data,response)=try await URLSession.shared.data(from:url.url!);guard (response as? HTTPURLResponse)?.statusCode==200,sessionID==replaySession else{return};var rows=try JSONSerialization.jsonObject(with:data) as? [Row] ?? [];for i in rows.indices{rows[i]["t"]=(stamp(rows[i]["date"]) ?? start)-start};rows.sort{num($0["t"])<num($1["t"])};telemetryCache[id]=rows;if telemetryCache.count>30{telemetryCache=Dictionary(uniqueKeysWithValues:Array(telemetryCache.prefix(15)))};applyTelemetry()}catch{}
     }
     func toggleTVPause() {
         if tvPaused { tvDelay=min(300,max(0,Date().timeIntervalSince1970-displayTime-2)) }

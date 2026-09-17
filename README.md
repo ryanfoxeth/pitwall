@@ -40,7 +40,13 @@ Use native volume handles to size/place the track. **Vehicle size** scales every
 
 ## Historical replay
 
-Race archives are not redistributed here. Download a historical session directly from OpenF1 using your own access:
+Select **Historical replay** in Controls to browse completed 2026 practices, qualifying sessions, sprints and Grands Prix. **Download & play** loads the selected session; **Download all** caches the available season on that device, prioritizing races. Keep Pitwall open while downloading. Cancel/retry preserves completed chunks. Archives are downloaded directly from OpenF1, not redistributed in this repository.
+
+The tabletop, timing, tires and other panels share the replay clock. Replay telemetry uses the selected session. The importer uses the actual finish and last completed lap so red flags and delays do not truncate races at their scheduled end. Car positions are sampled at 1 Hz and interpolated only across short gaps. Missing observations remain missing, and partial coverage is labeled. Availability is not guaranteed: Monaco 2026 has extensive missing positions even though lap timing continues.
+
+Monaco replays are registered to the detailed scenery using a completed recorded lap. Registration preserves lateral XY positions and applies the modeled road elevation; it is approximate, not surveyed. Poor fits are rejected and retain the provider-coordinate outline. Other circuits use their recorded outline. A privately supplied `Monaco2025Replay.json` enables a clearly labeled 2025 alternative; it is never presented as 2026.
+
+For a bundled archive or command-line import:
 
 ```sh
 cd visionos
@@ -48,7 +54,7 @@ python3 tools/fetch_replay.py 11369
 xcodegen generate
 ```
 
-This writes the ignored `Sources/Resources/MadridReplay.json` (legacy filename; content follows the supplied session ID). Rebuild the app and select Historical replay. Large sessions take time and many rate-limited requests. The importer chooses a completed non-pit-out lap for the outline and keeps actual XYZ samples. It does not invent missing motion or retirements. Replay telemetry fetches the archive's session and start time. Historical availability/rate limits are controlled by OpenF1.
+This writes the ignored `Sources/Resources/MadridReplay.json` (legacy filename; content follows the supplied session ID). An optional second argument selects another output path. Rebuild after adding bundled archives. Historical availability and rate limits are controlled by OpenF1. Run `sh tools/check_replay_registration.sh` to check registration math; native DEBUG `--validate-replay` checks moving recorded cars and the three detailed Monaco environments with a supplied registered Monaco archive.
 
 ## Optional lightcycle models
 
@@ -96,6 +102,6 @@ See `THIRD_PARTY.md` for asset provenance. Do not commit generated race archives
 
 The app starts in **Track library** with **Follow current race week** enabled. It selects the race in the current Monday–Sunday UTC week, or the next race between events; after the season it retains the final circuit. Selecting a circuit manually disables automatic selection until the toggle is enabled again. Live and replay selections are not interrupted. Choose **Source → Track library** in Controls to return. Upcoming races appear first; **Include earlier races** reveals the full 23-race calendar snapshot (17 September 2026). Select a circuit to open its tabletop, then switch among all four themes. The next race in this snapshot is Baku, followed by Sepang, Singapore, Austin, Mexico City, Interlagos, Las Vegas, Lusail and Yas Marina.
 
-These are reference circuit outlines projected into local meters. Twenty-two of the 23 circuits include approximate recorded elevation: Monaco retains its 2025 profile, Madrid uses the existing 2026 replay, and 20 others use 2024 qualifying profiles compared across at least three laps from two drivers. Sepang remains explicitly flat because a suitable profile has not been obtained. These are not surveyed road surfaces. See [elevation provenance and rebuilding](visionos/ELEVATION.md). Decorative terrain is not surveyed geography and layouts may differ from this season. No cars or race telemetry appear in track previews. Live/replay retains its provider-coordinate geometry so positions cannot be mixed with unrelated reference coordinates. Race dates in the bundled calendar are UTC calendar dates. This release does not include historical replays for every track.
+These are reference circuit outlines projected into local meters. Twenty-two of the 23 circuits include approximate recorded elevation: Monaco retains its 2025 profile, Madrid uses the existing 2026 replay, and 20 others use 2024 qualifying profiles compared across at least three laps from two drivers. Sepang remains explicitly flat because a suitable profile has not been obtained. These are not surveyed road surfaces. See [elevation provenance and rebuilding](visionos/ELEVATION.md). Decorative terrain is not surveyed geography and layouts may differ from this season. No cars or race telemetry appear in track previews. Live and unregistered replays retain provider-coordinate geometry; registered Monaco replays use the detailed catalog scenery. Race dates in the bundled calendar are UTC calendar dates. Historical archives are downloaded on demand, rather than bundled for every track.
 
 Circuit geometry: bacinger/f1-circuits (MIT); circuit metadata: f1db/f1db, license included with resources. Calendar: Jolpica snapshot. See `visionos/Sources/Resources/Season2026.json` and the adjacent license files.
