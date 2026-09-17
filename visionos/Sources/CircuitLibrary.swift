@@ -46,7 +46,7 @@ struct CircuitLibraryView:View {
    ForEach(upcoming) {c in circuitRow(c,next:c.id==upcoming.first?.id)}
    if showPast {ForEach(CircuitCatalog.all.filter{c in !upcoming.contains(where:{$0.id==c.id})}) {c in circuitRow(c,next:false)}}
    if CircuitCatalog.all.isEmpty {Text("Track library unavailable.").foregroundStyle(.orange)}
-   Text("Calendar snapshot: 17 September 2026; race dates are UTC. Reference geometry may differ from the current layout. Flat previews have no cars or race telemetry; switch to Live or Replay for positioned cars.").font(.caption).foregroundStyle(.secondary)
+   Text("Calendar snapshot: 17 September 2026; race dates are UTC. Reference geometry may differ from the current layout. Track previews have no cars or race telemetry; switch to Live or Replay for positioned cars.").font(.caption).foregroundStyle(.secondary)
    Link("Current F1 calendar",destination:URL(string:"https://www.formula1.com/en/racing/2026")!)
    Link("Circuit geometry and license",destination:URL(string:"https://github.com/bacinger/f1-circuits")!)
    Link("Circuit facts: F1DB · CC BY 4.0",destination:URL(string:"https://github.com/f1db/f1db")!)

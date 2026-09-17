@@ -14,3 +14,5 @@ visionos/Assets/Source/Lightcycles/
 visionos/Sources/Resources/Models/Cycle*.usdz
 visionos/Evidence/
 visionos/PitwallVision.xcodeproj/
+
+**/__pycache__/
