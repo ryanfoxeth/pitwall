@@ -90,11 +90,14 @@ import RealityKit
 }
 @MainActor func validateMonaco(_ race: RaceStore) {
  guard let c=CircuitCatalog.all.first(where:{$0.id == "monaco"}) else {return}
+ let originalTheme=race.theme
  race.previewCircuit(c);race.theme = .grandPrix
  let scene=TableScene();scene.update(race)
  var failures:[String]=[]
  if scene.circuit.findEntity(named:"MonacoGrandPrixGeography") == nil {failures.append("Bundled Monaco environment failed to load")}
  var checks=0
+ for environmentTheme in [RaceTheme.grandPrix, .tron] {
+ race.theme=environmentTheme
  for angle in [0.0,Double.pi/4,Double.pi/2,Double.pi] {
   race.rotation=angle
   for size:SIMD3<Float> in [SIMD3(0.7,0.25,0.7),SIMD3(3,1,3),SIMD3(5.5,2,5.5)] {
@@ -106,12 +109,15 @@ import RealityKit
    checks+=1
   }
  }
+ }
  for theme in RaceTheme.allCases {
   race.theme=theme;scene.update(race)
+  let hasTron=scene.circuit.findEntity(named:"MonacoTronGeography") != nil
+  if hasTron != (theme == .tron) {failures.append("Incorrect Tron environment in \(theme)")}
   let hasEnvironment=scene.circuit.findEntity(named:"MonacoGrandPrixGeography") != nil
   if hasEnvironment != (theme == .grandPrix) {failures.append("Incorrect environment in \(theme)")}
  }
- race.rotation=0;race.theme = .grandPrix;scene.update(race)
+ race.rotation=0;race.theme = originalTheme;scene.update(race)
  let bounds=scene.circuit.visualBounds(relativeTo:scene.root)
  if max(bounds.extents.x,bounds.extents.z)>0.70 {failures.append("Environment exceeds compact authored footprint: \(bounds.extents)")}
  let url=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("monaco-validation.json")

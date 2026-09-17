@@ -1,8 +1,10 @@
-# Monaco Grand Prix tabletop
+# Monaco themed tabletop
 
-A compact, geographically aligned interpretation of Monaco, rather than a surveyed architectural model. Available in Tracks → Monaco → Grand Prix. Other themes retain their existing scenery. The environment is deliberately restricted to the catalog coordinate frame; live/replay provider coordinates require an explicit registration before using it.
+A compact, geographically aligned interpretation of Monaco, rather than a surveyed architectural model. Available in Tracks → Monaco → Grand Prix or Tron. Tron uses the identical geography and docked fleet with dark metallic surfaces, emissive cyan architecture, amber landmark/portal accents and a clipped harbor grid. Mini Kart and Miniature retain their existing scenery. The environment is deliberately restricted to the catalog coordinate frame; live/replay provider coordinates require an explicit registration before using it.
 
-![Blender preview of the environment](preview.png)
+![Grand Prix Blender preview](preview.png)
+
+![Tron Blender preview](tron-preview.png)
 
 ## Sources and rights
 
@@ -29,6 +31,7 @@ Python 3 with numpy and Shapely 2.1+, Blender 5.2. Run from `visionos`:
 python tools/prepare_monaco.py osm.json relations.json Sources/Resources/Season2026.json Assets/Monaco/MonacoGeography.json
 python tools/dress_monaco.py Assets/Monaco/MonacoGeography.json
 blender --background --factory-startup --python tools/build_monaco_blender.py -- Assets/Monaco/MonacoGeography.json Sources/Resources/MonacoGrandPrix.usdz preview.png
+blender --background --factory-startup --python tools/build_monaco_blender.py -- Assets/Monaco/MonacoGeography.json Sources/Resources/MonacoTron.usdz tron-preview.png tron
 ```
 
 The committed sanitized geographic JSON is sufficient for the Blender step; no network access or account is required. To refresh source extracts, use Overpass `out body geom` for ways tagged building, coastline, pier, marina or tunnel in bbox `(43.731,7.417,43.743,7.432)`, and the relations listed above. The preparation script strips unrelated metadata, including public contact fields.

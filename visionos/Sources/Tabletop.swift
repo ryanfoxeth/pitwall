@@ -15,6 +15,10 @@ import Spatial
   guard let url=Bundle.main.url(forResource:"MonacoGrandPrix",withExtension:"usdz") else {return nil}
   return try? Entity.load(contentsOf:url)
  }()
+ private static let monacoTronTemplate: Entity? = {
+  guard let url=Bundle.main.url(forResource:"MonacoTron",withExtension:"usdz") else {return nil}
+  return try? Entity.load(contentsOf:url)
+ }()
  var lastFitDiagnostic = ""
  var center=SIMD3<Float>.zero;var factor:Float=1;var baseZ:Float=0
  func fit(in available: BoundingBox) {
@@ -50,10 +54,11 @@ import Spatial
   guard track.count>2 else{return}
   let xs=track.map(\.x),ys=track.map(\.y);center=SIMD3(((xs.min() ?? 0)+(xs.max() ?? 0))/2,((ys.min() ?? 0)+(ys.max() ?? 0))/2,0);factor=0.55/max(1,max((xs.max() ?? 1)-(xs.min() ?? 0),(ys.max() ?? 1)-(ys.min() ?? 0)));baseZ=track.map(\.z).min() ?? 0
   let terrain=Diorama(track.map(project),world:CircuitWorld.forTitle(title),theme:theme)
-  let monaco = theme == .grandPrix && CircuitCatalog.all.first(where:{$0.id == "monaco"})?.track == track ? Self.monacoTemplate?.clone(recursive:true) : nil
+  let template = theme == .grandPrix ? Self.monacoTemplate : theme == .tron ? Self.monacoTronTemplate : nil
+  let monaco = CircuitCatalog.all.first(where:{$0.id == "monaco"})?.track == track ? template?.clone(recursive:true) : nil
   if let monaco {
    // Asset is already normalized to the same 0.55 m catalog footprint.
-   monaco.name = "MonacoGrandPrixGeography"
+   monaco.name = theme == .tron ? "MonacoTronGeography" : "MonacoGrandPrixGeography"
    monaco.position.y = 0.006-baseZ*factor
    circuit.addChild(monaco)
   } else {circuit.addChild(terrain.mesh())}

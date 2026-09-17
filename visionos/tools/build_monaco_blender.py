@@ -4,7 +4,7 @@ Uses Blender Z up; exported Y up matches Pitwall's x,height,-north convention.
 """
 import bpy, json, sys, math, random
 from mathutils import Vector
-args=sys.argv[sys.argv.index('--')+1:];data=json.load(open(args[0]));output=args[1];preview=args[2]
+args=sys.argv[sys.argv.index('--')+1:];data=json.load(open(args[0]));output=args[1];preview=args[2];tron=len(args)>3 and args[3]=='tron'
 bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
 random.seed(17)
 track=data['track'];cx=(min(p[0] for p in track)+max(p[0] for p in track))/2;cy=(min(p[1] for p in track)+max(p[1] for p in track))/2
@@ -189,6 +189,48 @@ for x,y in [(-260,-310),(-260,-260),(-260,-210),(145,255),(155,272),(125,262),(6
  z=ground(x,y);cylinder('Palm trunk',(x,y,z+5),.7,10,'Terracotta',8)
  for j in range(6):
   a=j*math.pi/3;leaf=box('Palm frond',(x+math.cos(a)*2,y+math.sin(a)*2,z+10),(7,1.3,.6),'Foliage',a);leaf.rotation_euler.y=.22
+# Theme pass uses the exact same geography and dock layout. Outline semantic
+# objects before batching, never triangulation diagonals or the terrain mesh.
+if tron:
+ for name,m in mats.items():
+  color=(.008,.018,.028) if name not in ['Water','Glass','Pool'] else (.005,.035,.055)
+  p=m.node_tree.nodes.get('Principled BSDF');p.inputs['Base Color'].default_value=(*color,1);p.inputs['Metallic'].default_value=.5;p.inputs['Roughness'].default_value=.32;m.diffuse_color=(*color,1)
+ for name,color in [('NeonCyan',(.01,.72,1)),('NeonAmber',(1,.24,.015)),('GridBlue',(.005,.12,.24))]:
+  m=mat(name,color,.4);p=m.node_tree.nodes.get('Principled BSDF');p.inputs['Emission Color'].default_value=(*color,1);p.inputs['Emission Strength'].default_value=2 if name!='GridBlue' else .8
+ bpy.context.view_layer.update()
+ outline_names=('Megayacht hull','White superstructure roof','City ','Roof ','Casino','Hotel','Yacht Club deck','Fairmont','Continuous tunnel roof','Tunnel portal','Solid marina pontoon')
+ # Combine all light strips into a single mesh per color, avoiding thousands
+ # of scene nodes in the shipped tabletop asset.
+ strips={name:([],[]) for name in ['NeonCyan','NeonAmber','GridBlue']}
+ def strip(a,b,width,color):
+  a,b=Vector(a),Vector(b);d=b-a
+  if d.length<.01:return
+  d.normalize();u=d.cross(Vector((0,0,1)))
+  if u.length<.01:u=d.cross(Vector((0,1,0)))
+  u.normalize();u*=width/2;v=d.cross(u)
+  verts,faces=strips[color];i=len(verts)
+  verts.extend([a-u-v,a+u-v,a+u+v,a-u+v,b-u-v,b+u-v,b+u+v,b-u+v])
+  faces.extend([tuple(i+j for j in f) for f in [(0,3,2,1),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)]])
+ for o in list(bpy.context.scene.objects):
+  if o.type!='MESH' or not o.name.startswith(outline_names):continue
+  color='NeonAmber' if o.name.startswith(('Casino','Hotel','Tunnel portal')) else 'NeonCyan'
+  for e in o.data.edges:
+   a,b=[o.matrix_world @ o.data.vertices[j].co for j in e.vertices]
+   strip(a,b,.65 if 'hull' not in o.name else .48,color)
+ for a,b in zip(water,water[1:]):
+  strip((*a,1.5),(*b,1.5),.9,'NeonCyan')
+ # Water grid clipped to the mapped harbor polygon by edge intersections.
+ for axis in [0,1]:
+  other=1-axis
+  for pos in range(math.ceil(min(p[axis] for p in water)/30)*30,int(max(p[axis] for p in water)),30):
+   cuts=[]
+   for a,b in zip(water,water[1:]):
+    if (a[axis]<=pos<b[axis]) or (b[axis]<=pos<a[axis]):cuts.append(a[other]+(pos-a[axis])/(b[axis]-a[axis])*(b[other]-a[other]))
+   cuts.sort()
+   for lo,hi in zip(cuts[::2],cuts[1::2]):
+    a=[0,0,-.65];b=a.copy();a[axis]=b[axis]=pos;a[other]=lo;b[other]=hi;strip(a,b,.45,'GridBlue')
+ for name,(vertices,faces) in strips.items():mesh(name+' light architecture',vertices,faces,name)
+
 # Triangulate and batch by material; retain original named objects in source .blend.
 for o in list(bpy.context.scene.objects):
  if o.type=='MESH':
@@ -209,8 +251,8 @@ for a,b in zip(track,track[1:]):
  aa=((a[0]-cx)*scale,(a[1]-cy)*scale,a[2]*scale);bb=((b[0]-cx)*scale,(b[1]-cy)*scale,b[2]*scale)
  ribbon('Preview road',aa,bb,.006,.0008,'Asphalt')
 scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=32;scene.render.resolution_x=1600;scene.render.resolution_y=1600;scene.render.resolution_percentage=100
-scene.world.color=(.3,.3,.3)
-bpy.ops.object.light_add(type='AREA',location=(-.5,-.4,1.2));bpy.context.object.data.energy=35;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=1
+scene.world.color=(.035,.035,.035) if tron else (.3,.3,.3)
+bpy.ops.object.light_add(type='AREA',location=(-.5,-.4,1.2));bpy.context.object.data.energy=8 if tron else 35;bpy.context.object.data.shape='DISK';bpy.context.object.data.size=1
 bpy.ops.object.camera_add(location=(.75,-1.05,1.0));cam=bpy.context.object;cam.rotation_euler=(Vector((0,0,0))-cam.location).to_track_quat('-Z','Y').to_euler();cam.data.type='ORTHO';cam.data.ortho_scale=.83;scene.camera=cam
 scene.render.image_settings.file_format='PNG';scene.render.filepath=preview;scene.view_settings.view_transform='AgX';bpy.ops.render.render(write_still=True)
 print('MONACO_COMPLETE',len(boats),'yachts',len(scene.objects),'batched objects')
