@@ -5,6 +5,7 @@ import Spatial
 
 @MainActor final class TableScene:ObservableObject {
  let presentation=Entity()
+ let circuit=Entity()
  init() { presentation.addChild(root) }
  let root=Entity();var bikes:[Int:Entity]=[:];var trails:[ModelEntity]=[];var lastTrack:[SIMD3<Float>]=[];var theme:RaceTheme = .tron;var lastColors:[Int:UIColor]=[:];var lastTitle="";var previousHeading:[Int:Float]=[:];var lastFrameTime=Date();var vehicleRoles:[Int:String]=[:]
  var lastFitDiagnostic = ""
@@ -16,7 +17,8 @@ import Spatial
   // include system volume scaling, feeding that scale back into our next fit.
   root.position = .zero
   root.scale = SIMD3(repeating: 1)
-  let bounds = root.visualBounds(relativeTo: presentation)
+  // Cars and trails must never control the circuit’s size or center.
+  let bounds = (circuit.parent == nil ? root : circuit).visualBounds(relativeTo: presentation)
   let extent = simd_max(bounds.extents, SIMD3(repeating: 0.001))
   let ratios = available.extents / extent
   let scale = max(0.001, min(ratios.x,min(ratios.y,ratios.z))*0.96)
@@ -39,20 +41,20 @@ import Spatial
  }
  func build(_ track:[SIMD3<Float>], theme:RaceTheme, title:String="") {
   self.theme=theme;lastTitle=title;lastColors=[:];previousHeading=[:]
-  root.children.removeAll();bikes=[:];vehicleRoles=[:];trails=[];lastTrack=track
+  root.children.removeAll();circuit.children.removeAll();root.addChild(circuit);bikes=[:];vehicleRoles=[:];trails=[];lastTrack=track
   guard track.count>2 else{return}
   let xs=track.map(\.x),ys=track.map(\.y);center=SIMD3(((xs.min() ?? 0)+(xs.max() ?? 0))/2,((ys.min() ?? 0)+(ys.max() ?? 0))/2,0);factor=0.55/max(1,max((xs.max() ?? 1)-(xs.min() ?? 0),(ys.max() ?? 1)-(ys.min() ?? 0)));baseZ=track.map(\.z).min() ?? 0
   let terrain=Diorama(track.map(project),world:CircuitWorld.forTitle(title),theme:theme)
-  root.addChild(terrain.mesh())
+  circuit.addChild(terrain.mesh())
   var distance:Float=0
   for i in track.indices {
    let a=project(track[i]),b=project(track[(i+1)%track.count])
    guard simd_distance(a,b)>0.00001 else{continue}
-   root.addChild(segment(a,b,width:theme == .tron ? 0.007:theme == .kart ? 0.014:0.010,height:0.001,color:theme.road))
+   circuit.addChild(segment(a,b,width:theme == .tron ? 0.007:theme == .kart ? 0.014:0.010,height:0.001,color:theme.road))
    let d=simd_normalize(SIMD3(b.x-a.x,0,b.z-a.z)+SIMD3(0.000001,0,0));let side=SIMD3(-d.z,0,d.x)*(theme == .tron ? 0.005:theme == .kart ? 0.0085:0.0065)
    let alternate=Int(distance/0.018)%2==0
    let edge:UIColor=theme == .tron ? .cyan:theme == .kart ? (alternate ? .systemYellow:.systemRed):(alternate ? .white:.systemRed)
-   for sign:Float in [-1,1]{root.addChild(segment(a+side*sign,b+side*sign,width:theme == .tron ? 0.0008:0.0025,color:edge))}
+   for sign:Float in [-1,1]{circuit.addChild(segment(a+side*sign,b+side*sign,width:theme == .tron ? 0.0008:0.0025,color:edge))}
    distance += simd_distance(a,b)
   }
   if theme != .tron { addScenery(track.map(project),terrain:terrain) }
@@ -101,17 +103,17 @@ import Spatial
    if theme == .kart {
     let choices:[String]=terrain.world == .desert ? ["Rock","Rock","Palm","Bush"]:terrain.world == .alpine ? ["Pine","Pine","Rock","Bush"]:terrain.world == .tropical || terrain.world == .harbor ? ["Palm","Tree","Bush","Rock"]:["Tree","Pine","Bush","Mushroom","Rock"]
     let name=choices[i%choices.count],size:Float=name == "Tree" || name == "Pine" || name == "Palm" ? 0.038:0.014
-    if let prop=ModelLibrary.model(name,size:size){prop.position=p;prop.orientation=simd_quatf(angle:Float(i)*0.7,axis:SIMD3(0,1,0));root.addChild(prop)}
+    if let prop=ModelLibrary.model(name,size:size){prop.position=p;prop.orientation=simd_quatf(angle:Float(i)*0.7,axis:SIMD3(0,1,0));circuit.addChild(prop)}
     if i%13==0 {addBillboard(at:p)}
     if i%23==0 {
      let stand=Entity();stand.position=p
      for tier in 0..<3 {stand.addChild(box(SIMD3(0.024,0.003,0.005),SIMD3(0,Float(tier)*0.003,Float(tier)*0.005),.systemOrange))}
      for seat in 0..<5 {let head=ModelEntity(mesh:.generateSphere(radius:0.0015),materials:[material(seat%2==0 ? .systemPurple:.systemYellow)]);head.position=SIMD3(Float(seat-2)*0.004,0.010,0.010);stand.addChild(head)}
-     root.addChild(stand)
+     circuit.addChild(stand)
     }
    } else if i%12==0 {
     let stand=Entity();stand.position=p
-    for tier in 0..<3 {stand.addChild(box(SIMD3(0.025,0.003,0.006),SIMD3(0,Float(tier)*0.003,Float(tier)*0.005),tier%2==0 ? .lightGray:.systemBlue))};root.addChild(stand)
+    for tier in 0..<3 {stand.addChild(box(SIMD3(0.025,0.003,0.006),SIMD3(0,Float(tier)*0.003,Float(tier)*0.005),tier%2==0 ? .lightGray:.systemBlue))};circuit.addChild(stand)
    }
   }
   if theme == .kart {addWorldDetails(terrain)}
@@ -120,11 +122,11 @@ import Spatial
   gate.orientation=simd_quatf(angle:atan2(-(next.z-p.z),next.x-p.x),axis:SIMD3(0,1,0))
   for sign:Float in [-1,1]{gate.addChild(box(SIMD3(0.002,0.026,0.002),SIMD3(0,0.012,sign*0.012),.white))}
   for j in 0..<10 {gate.addChild(box(SIMD3(0.002,0.004,0.0024),SIMD3(0,0.025,Float(j)*0.0024-0.0108),j%2==0 ? .black:.white))}
-  root.addChild(gate)
+  circuit.addChild(gate)
   if theme == .kart,terrain.world == .harbor {
    let tunnel=Entity();tunnel.position=p;tunnel.orientation=gate.orientation
    for sign:Float in [-1,1] {tunnel.addChild(box(SIMD3(0.028,0.021,0.003),SIMD3(0,0.009,sign*0.013),.systemIndigo))}
-   tunnel.addChild(box(SIMD3(0.028,0.005,0.029),SIMD3(0,0.022,0),.systemIndigo));root.addChild(tunnel)
+   tunnel.addChild(box(SIMD3(0.028,0.005,0.029),SIMD3(0,0.022,0),.systemIndigo));circuit.addChild(tunnel)
   }
  }
  func addBillboard(at p:SIMD3<Float>){
@@ -133,21 +135,21 @@ import Spatial
   sign.addChild(box(SIMD3(0.0015,0.012,0.0015),SIMD3(0.008,0.006,0),.white))
   sign.addChild(box(SIMD3(0.023,0.009,0.002),SIMD3(0,0.014,0),.systemOrange))
   for i in 0..<3 {let arrow=box(SIMD3(0.0015,0.005,0.001),SIMD3(Float(i-1)*0.006,0.014,0.0015),.white);arrow.orientation=simd_quatf(angle:-0.6,axis:SIMD3(0,0,1));sign.addChild(arrow)}
-  root.addChild(sign)
+  circuit.addChild(sign)
  }
  func addWorldDetails(_ terrain:Diorama){
   guard let center=terrain.featureCenter else{return}
   if terrain.world != .desert {
-   let water=ModelEntity(mesh:.generateCylinder(height:0.0006,radius:0.028),materials:[SimpleMaterial(color:UIColor(red:0.12,green:0.67,blue:0.88,alpha:1),roughness:0.35,isMetallic:false)]);water.position=center+SIMD3(0,-0.002,0);root.addChild(water)
-   for i in 0..<4 {root.addChild(box(SIMD3(0.009,0.0002,0.0007),center+SIMD3(Float(i%2)*0.012-0.009,-0.0015,Float(i)*0.008-0.012),UIColor(white:0.9,alpha:1)))}
+   let water=ModelEntity(mesh:.generateCylinder(height:0.0006,radius:0.028),materials:[SimpleMaterial(color:UIColor(red:0.12,green:0.67,blue:0.88,alpha:1),roughness:0.35,isMetallic:false)]);water.position=center+SIMD3(0,-0.002,0);circuit.addChild(water)
+   for i in 0..<4 {circuit.addChild(box(SIMD3(0.009,0.0002,0.0007),center+SIMD3(Float(i%2)*0.012-0.009,-0.0015,Float(i)*0.008-0.012),UIColor(white:0.9,alpha:1)))}
    if terrain.world == .harbor {
-    let boat=box(SIMD3(0.014,0.003,0.006),center+SIMD3(0,0,0),.white);root.addChild(boat)
-    root.addChild(box(SIMD3(0.005,0.005,0.005),center+SIMD3(-0.002,0.003,0),.systemBlue))
+    let boat=box(SIMD3(0.014,0.003,0.006),center+SIMD3(0,0,0),.white);circuit.addChild(boat)
+    circuit.addChild(box(SIMD3(0.005,0.005,0.005),center+SIMD3(-0.002,0.003,0),.systemBlue))
     for i in 0..<5 {let p=center+SIMD3(Float(i-2)*0.011,0,0.037);let h:Float=0.017+Float(i%3)*0.004
-     root.addChild(box(SIMD3(0.009,h,0.008),SIMD3(p.x,terrain.height(p.x,p.z)+h/2,p.z),i%2==0 ? .systemPink:.systemYellow))}
+     circuit.addChild(box(SIMD3(0.009,h,0.008),SIMD3(p.x,terrain.height(p.x,p.z)+h/2,p.z),i%2==0 ? .systemPink:.systemYellow))}
    }
   } else {
-   if let rock=ModelLibrary.model("Rock",size:0.045){rock.position=center;root.addChild(rock)}
+   if let rock=ModelLibrary.model("Rock",size:0.045){rock.position=center;circuit.addChild(rock)}
   }
  }
  func colorVehicle(_ entity:Entity,_ color:UIColor){

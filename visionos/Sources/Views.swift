@@ -77,6 +77,7 @@ struct ControlView: View {
     openWindow(id: "tabletop-resizable")
     try? await Task.sleep(for: .seconds(3)); record("reopened")
    }
+   if ProcessInfo.processInfo.arguments.contains("--validate-track-isolation") {validateTrackIsolation(race)}
    if ProcessInfo.processInfo.arguments.contains("--validate-volume") {validateVolume(race)}
    if ProcessInfo.processInfo.arguments.contains("--validate-circuits") {await validateCircuits(race)}
    if let i=ProcessInfo.processInfo.arguments.firstIndex(of:"--preview-circuit"),ProcessInfo.processInfo.arguments.count>i+1,let c=CircuitCatalog.all.first(where:{$0.id==ProcessInfo.processInfo.arguments[i+1]}) {race.previewCircuit(c);openWindow(id:"tabletop-resizable")}

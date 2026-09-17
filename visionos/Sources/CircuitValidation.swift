@@ -56,4 +56,36 @@ import RealityKit
  let url=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("volume-validation.json")
  try! JSONSerialization.data(withJSONObject:["passed":failures.isEmpty,"failures":failures,"fitChecks":checks]).write(to:url)
 }
+@MainActor func validateTrackIsolation(_ race: RaceStore) {
+ let savedLocations = race.locations
+ let savedTime = race.time
+ let savedSelected = race.selected
+ // Exercise a real bundled replay when available; otherwise use a small fixture.
+ if race.locations.isEmpty {
+  race.selected = 1; race.time = 4
+  race.locations[1] = (0...4).map { [Double($0), 10000 + Double($0)*10, 8000, 6000] }
+ }
+ let replaySamples = stride(from: max(0,race.time-4), through: race.time, by: 0.2).compactMap {race.sample(race.selected,at:$0).0}
+ var results: [[String:Any]] = []
+ var passed = !replaySamples.isEmpty
+ for id in ["marina_bay","monaco","baku"] {
+  guard let c = CircuitCatalog.all.first(where: {$0.id == id}) else {passed = false;continue}
+  race.previewCircuit(c)
+  let scene = TableScene();scene.update(race)
+  let target = BoundingBox(min: SIMD3(-0.442647,-0.158088,0),max: SIMD3(0.442647,0.158088,0.885294))
+  scene.fit(in:target)
+  let scale = scene.presentation.scale
+  let position = scene.presentation.position
+  // A bad telemetry object must not alter the circuit framing.
+  let stray = ModelEntity(mesh: .generateBox(size: 0.01));stray.position = SIMD3(3,3,3);scene.root.addChild(stray)
+  scene.fit(in:target)
+  let noTrail = race.trail(race.selected).isEmpty && scene.trails.allSatisfy {!$0.isEnabled}
+  let stable = simd_length(scene.presentation.scale-scale)<0.00001 && simd_length(scene.presentation.position-position)<0.00001
+  passed = passed && noTrail && stable
+  results.append(["circuit":id,"noPreviewTrails":noTrail,"outlierCannotShrinkCircuit":stable,"scale":scale.x,"legacyReplayProjectedPoints":replaySamples.prefix(2).map {p in let q=scene.project(p);return [q.x,q.y,q.z]}])
+ }
+ race.locations=savedLocations;race.time=savedTime;race.selected=savedSelected
+ let url=FileManager.default.urls(for:.documentDirectory,in:.userDomainMask)[0].appendingPathComponent("track-isolation.json")
+ try? JSONSerialization.data(withJSONObject:["passed":passed,"replaySamples":replaySamples.count,"checks":results],options:.prettyPrinted).write(to:url)
+}
 #endif

@@ -103,7 +103,7 @@ struct Car: Identifiable {
         feeds["laps"]=allLaps.filter { $0["lap_duration"] is NSNumber && num($0["date_start_seconds"])+num($0["lap_duration"]) <= time }
     }
     func trail(_ n: Int) -> [SIMD3<Float>] {
-        guard highlights.contains(n) else { return [] }
+        guard mode == "Live" || mode == "Replay", highlights.contains(n) else { return [] }
         if mode == "Live" { return liveBuffer.filter { $0.date > displayTime-5 && $0.date <= displayTime }.compactMap { $0.cars.first(where:{$0.id==n})?.point } }
         return stride(from:max(0,time-4),through:time,by:0.2).compactMap { sample(n,at:$0).0 }
     }
