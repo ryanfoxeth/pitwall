@@ -53,7 +53,7 @@ enum ReplayRegistration {
    }
   }
   root["locations"]=transformed;root["track"]=target
-  root["registration"]=["circuit_id":circuit.id,"rms_m":rms,"method":"Similarity-aligned recorded XY; modeled road elevation. Approximate, not surveyed."]
+  root["registration"]=["circuit_id":circuit.id,"rms_m":rms,"transform":[a,b,tx,ty],"method":"Similarity-aligned recorded XY; modeled road elevation. Approximate, not surveyed."]
   return true
  }
  static func resample(_ points:[[Double]],_ count:Int)->[[Double]] {

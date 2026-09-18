@@ -34,6 +34,7 @@ struct Car: Identifiable {
     @Published var feeds: [String: [Row]] = [:]; @Published var weather: Row = [:]; @Published var messages: [Row] = []
     @Published var rotation: Double = 0; @Published var tableScale: Double = 1
     var locations: [Int: [[Double]]] = [:]; var drivers: [Row] = []; var replayFeeds: [String:[Row]] = [:]
+    var liveRegistration=LiveCircuitRegistration()
     var liveFrames: [(Double, [Car])] = []; var liveTrail: [Int: [(Double,SIMD3<Float>)]] = [:]
     var telemetryCache: [String:[Row]] = [:]
     struct LiveSnapshot {
@@ -123,7 +124,7 @@ struct Car: Identifiable {
         if mode == "Live" { return liveBuffer.filter { $0.date > displayTime-5 && $0.date <= displayTime }.compactMap { $0.cars.first(where:{$0.id==n})?.point } }
         return stride(from:max(0,time-4),through:time,by:0.2).compactMap { sample(n,at:$0).0 }
     }
-    func switchMode() { lastTimingSecond = -1;playing=false; cars=[]; liveFrames=[];liveTrail=[:];liveBuffer=[];displayedSnapshot = -1;tvPaused=false;error=nil; if mode=="Replay" { track=replayTrack;title=replayTitle;updateReplay();status="HISTORICAL REPLAY" } else if mode=="Tracks" {if automaticallySelectCircuit,let c=CircuitCatalog.automatic() {selectedCircuitID=c.id};feeds=[:];weather=[:];messages=[];if let c=CircuitCatalog.all.first(where:{$0.id==selectedCircuitID}) {track=c.track;title=c.circuit+" · "+c.location;status="TRACK PREVIEW · "+c.elevation} else {track=[];status="Select a circuit"}} else { track=[];status="Connecting to your server…";lastLive=0 } }
+    func switchMode() { liveRegistration=LiveCircuitRegistration();lastTimingSecond = -1;playing=false; cars=[]; liveFrames=[];liveTrail=[:];liveBuffer=[];displayedSnapshot = -1;tvPaused=false;error=nil; if mode=="Replay" { track=replayTrack;title=replayTitle;updateReplay();status="HISTORICAL REPLAY" } else if mode=="Tracks" {if automaticallySelectCircuit,let c=CircuitCatalog.automatic() {selectedCircuitID=c.id};feeds=[:];weather=[:];messages=[];if let c=CircuitCatalog.all.first(where:{$0.id==selectedCircuitID}) {track=c.track;title=c.circuit+" · "+c.location;status="TRACK PREVIEW · "+c.elevation} else {track=[];status="Select a circuit"}} else { track=[];status="Connecting to your server…";lastLive=0 } }
     func fetchLive() async {
         guard !key.isEmpty else { status="Enter a scoped Pitwall device key to connect";return }
         do {
@@ -133,11 +134,13 @@ struct Car: Identifiable {
             guard mode=="Live" else{return};let r=try JSONSerialization.jsonObject(with:data) as! Row
             let session=r["session"] as? Row ?? [:];let newTitle="\(text(session["location"])) · \(text(session["session_name"]))"
             if title != newTitle {liveFrames=[];liveTrail=[:];liveBuffer=[];displayedSnapshot = -1;tvPaused=false};title=newTitle
-            track=(r["track"] as? [Row] ?? []).map { SIMD3(Float(num($0["x"])),Float(num($0["y"])),Float(num($0["z"]))) }
+            let sourceTrack=(r["track"] as? [Row] ?? []).map { SIMD3(Float(num($0["x"])),Float(num($0["y"])),Float(num($0["z"]))) }
+            if liveRegistration.configure(provider:Int(num(session["circuit_key"])),outline:sourceTrack) {liveFrames=[];liveTrail=[:];liveBuffer=[];displayedSnapshot = -1}
+            track=liveRegistration.track ?? sourceTrack
             let next=(r["cars"] as? [Row] ?? []).map { d -> Car in
                 let n=Int(num(d["number"]));let p=d["location"] as? Row;let tele=d["telemetry"] as? Row ?? [:]
                 let recent=p.flatMap{stamp($0["date"])}.map{Date().timeIntervalSince1970-$0<15} ?? false
-                var c=Car(id:n,name:d["name"] as? String ?? "\(n)",team:d["team"] as? String ?? "",color:d["color"] as? String ?? "42D9FF",point:recent ? SIMD3(Float(num(p?["x"])),Float(num(p?["y"])),0) : nil,position:(d["position"] as? Int),lap:Int(num(d["lap"])))
+                var c=Car(id:n,name:d["name"] as? String ?? "\(n)",team:d["team"] as? String ?? "",color:d["color"] as? String ?? "42D9FF",point:recent ? liveRegistration.point(SIMD3(Float(num(p?["x"])),Float(num(p?["y"])),0)) : nil,position:(d["position"] as? Int),lap:Int(num(d["lap"])))
                 c.gap=text(d["gap"]);c.interval=text(d["interval"]);c.compound=text(d["compound"]);c.age=Int(num(d["tire_age"]));c.status=d["status"] as? String ?? "";c.speed=text(tele["speed"]);c.gear=text(tele["n_gear"]);c.throttle=text(tele["throttle"]);c.brake=text(tele["brake"]);c.lastLap=text(d["last_lap"]);return c
             }
             let now=Date().timeIntervalSince1970;liveFrames.append((now,next));liveFrames=Array(liveFrames.suffix(2));lastLive=now

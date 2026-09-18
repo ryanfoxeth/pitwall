@@ -5,7 +5,7 @@ import math
 from pathlib import Path
 rows = json.loads((Path(__file__).resolve().parents[1] / 'Sources/Resources/Season2026.json').read_text())
 assert len(rows) == 23
-assert sum(bool(row.get("elevationSource")) for row in rows) == 22
+assert sum(bool(row.get("elevationSource")) for row in rows) == 23
 assert len({row['id'] for row in rows}) == len(rows)
 assert [row['round'] for row in rows] == list(range(1, 24))
 upcoming = [row for row in rows if row['date'] >= '2026-09-17']
@@ -22,6 +22,8 @@ for row in rows:
         assert 1 < height < 150
         if row['id'] == 'monaco':
             assert 40 < height < 43
+        elif row['id'] == 'sepang':
+            assert source['resolution_m']==30 and source['road_surface'] is False
         else:
             assert len(source['laps']) >= 3
             assert len({lap['driver_number'] for lap in source['laps']}) >= 2

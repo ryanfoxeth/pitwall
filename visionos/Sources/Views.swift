@@ -52,7 +52,7 @@ struct ControlView: View {
    HStack{Text("Rotate");Slider(value:$race.rotation,in:-Double.pi...Double.pi)}
    Text("Resize the track using the volume’s corner handles. The entire model scales uniformly to fit; enlarge height and depth too if one dimension limits its size.").font(.caption).foregroundStyle(.secondary)
    DisclosureGroup("Model credits") {
-    Text("Monaco Grand Prix scenery: © OpenStreetMap contributors (ODbL). Original stylized landmarks and yachts. Approximate building heights and terrain; covered tunnel and decorative docked yachts.").font(.caption)
+    Text("Monaco and remaining-season scenery: © OpenStreetMap contributors (ODbL). Original stylized landmarks. Approximate building heights and terrain; decorative docked yachts.").font(.caption)
     Link("OpenStreetMap attribution",destination:URL(string:"https://www.openstreetmap.org/copyright")!)
     Text("Optional models: Tron Light Cycle by Firestar · Lightcycle by SpringSociety. CC BY 4.0. Adapted for Pitwall: normalized size/orientation, removed separate trail and converted to USDZ.").font(.caption)
     Link("Firestar — Tron Light Cycle",destination:URL(string:"https://sketchfab.com/3d-models/tron-light-cycle-083076c8a3644b088ce7f1e107a12ca6")!)
@@ -84,6 +84,7 @@ struct ControlView: View {
    }
    if let i=ProcessInfo.processInfo.arguments.firstIndex(of:"--theme"),ProcessInfo.processInfo.arguments.count>i+1,let theme=RaceTheme(rawValue:ProcessInfo.processInfo.arguments[i+1]) {race.theme=theme}
    if ProcessInfo.processInfo.arguments.contains("--replay-2025"),let url=Bundle.main.url(forResource:"Monaco2025Replay",withExtension:"json"),let data=try? Data(contentsOf:url){try? race.loadReplay(data:data)}
+   if ProcessInfo.processInfo.arguments.contains("--validate-season-scenery") {await validateSeasonScenery(race)}
    if ProcessInfo.processInfo.arguments.contains("--validate-replay") {validateReplay(race)}
    if ProcessInfo.processInfo.arguments.contains("--validate-track-isolation") {validateTrackIsolation(race)}
    if ProcessInfo.processInfo.arguments.contains("--validate-monaco") {validateMonaco(race)}

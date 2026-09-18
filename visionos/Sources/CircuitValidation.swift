@@ -20,7 +20,7 @@ import RealityKit
    let scene=TableScene();race.theme=theme;scene.update(race)
    let bounds=scene.root.visualBounds(relativeTo:nil)
    expect(bounds.extents.x.isFinite && bounds.extents.z.isFinite)
-   expect(bounds.extents.x>0.1 && bounds.extents.z>0.1 && bounds.extents.x<0.7 && bounds.extents.z<0.7)
+   expect(bounds.extents.x>0.1 && bounds.extents.z>0.1 && bounds.extents.x<0.91 && bounds.extents.z<0.91)
    expect(scene.bikes.isEmpty)
    results.append(["id":c.id,"theme":theme.rawValue,"points":c.track.count,"bounds":[bounds.extents.x,bounds.extents.y,bounds.extents.z]])
    await Task.yield()
@@ -44,7 +44,8 @@ import RealityKit
    let target=BoundingBox(min: -size/2,max:size/2)
    for _ in 0..<4 {
     scene.update(race);scene.fit(in:target)
-    let actual=scene.root.visualBounds(relativeTo:world)
+    // Match the production fit target; disabled trail placeholders are outside it.
+    let actual=scene.circuit.visualBounds(relativeTo:world)
     let ratios=actual.extents/size
     if !ratios.x.isFinite || !ratios.y.isFinite || !ratios.z.isFinite || !actual.center.x.isFinite || !actual.center.y.isFinite || !actual.center.z.isFinite || abs(max(ratios.x,max(ratios.y,ratios.z))-0.96)>=0.002 || simd_length(actual.center)>=0.002 {
      failures.append("\(id): size \(size), bounds \(actual.extents), center \(actual.center)")

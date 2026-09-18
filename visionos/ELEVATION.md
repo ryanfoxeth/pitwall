@@ -25,7 +25,7 @@ Public local LiDAR/terrain and openly licensed aerial imagery can improve surrou
 
 ## Bundled coverage
 
-22 of 23 circuits have recorded elevation. Sepang remains explicitly flat pending suitable profile data.
+22 of 23 circuits have recorded elevation. Sepang has a separate NASA SRTMGL1 v3 terrain estimate sampled through Open Topo Data at 30 m resolution. Its smoothed 28.6 m range is not surveyed road elevation: terrain, embankments and buildings can influence it. The published historical 22 m range is a comparison, not a calibration target. Source observations are retained in `Assets/Season/SepangElevation.json`; rebuild using `python3 visionos/tools/fetch_sepang_terrain.py` after preparing the geographic projection.
 
 | Circuit | Recorded range (m) | Source year |
 |---|---:|---:|
@@ -44,7 +44,7 @@ Public local LiDAR/terrain and openly licensed aerial imagery can improve surrou
 | Autodromo Nazionale Monza | 12.4 | 2024 |
 | Circuito de Madring | 24.17 | 2026 |
 | Baku City Circuit | 26.63 | 2024 |
-| Sepang International Circuit | Unavailable | — |
+| Sepang International Circuit | 28.6 (terrain estimate) | SRTMGL1 v3 |
 | Marina Bay Street Circuit | 5.15 | 2024 |
 | Circuit of the Americas | 29.9 | 2024 |
 | Autódromo Hermanos Rodríguez | 2.55 | 2024 |

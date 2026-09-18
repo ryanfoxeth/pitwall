@@ -40,7 +40,16 @@ actor ReplayDownloads {
   try await fetch("sessions",["year":"2026"],cached:false).compactMap(ReplaySession.init).sorted{$0.start>$1.start}
  }
  func archive(_ s:ReplaySession,progress:@escaping @Sendable (String) async->Void) async throws->Data {
-  if let data=try? Data(contentsOf:path(s.id)){return data}
+  if let data=try? Data(contentsOf:path(s.id)) {
+   // Upgrade older provider-coordinate archives once, without downloading again.
+   if var root=(try? JSONSerialization.jsonObject(with:data)) as? Row,root["registration"] == nil,
+      let id=CircuitScenery.providerIDs[s.circuitKey],let circuit=CircuitCatalog.all.first(where:{$0.id==id}),
+      ReplayRegistration.register(&root,circuit:circuit) {
+    let aligned=try JSONSerialization.data(withJSONObject:root)
+    try aligned.write(to:path(s.id),options:.atomic);return aligned
+   }
+   return data
+  }
   let key=["session_key":String(s.id)]
   guard let session=try await fetch("sessions",key).first else{throw URLError(.resourceUnavailable)}
   var feeds:[String:[Row]]=[:];var missing:[String]=[]
@@ -77,7 +86,7 @@ actor ReplayDownloads {
   for lap in laps {let start=num(lap["date_start_seconds"]),end=start+num(lap["lap_duration"]);let samples=(locations[String(Int(num(lap["driver_number"])))] ?? []).filter{$0[0]>=start && $0[0]<=end};if samples.count>35 {track=samples.map{Array($0[1...3])};break}}
   guard track.count>35 else{throw NSError(domain:"Replay",code:2,userInfo:[NSLocalizedDescriptionKey:"No complete recorded lap is available to build this session’s track."])}
   var root:Row=["session":session,"duration":downloadEnd-s.start,"locations":locations,"track":track,"feeds":feeds,"missingFeeds":missing,"provenance":"User-downloaded OpenF1 observations sampled at 1 Hz. Missing positions are not fabricated."]
-  if s.circuitKey==22,let circuit=CircuitCatalog.all.first(where:{$0.id=="monaco"}) {await progress("Aligning Monaco race to the detailed scenery…");_ = ReplayRegistration.register(&root,circuit:circuit)}
+  if let id=CircuitScenery.providerIDs[s.circuitKey],let circuit=CircuitCatalog.all.first(where:{$0.id==id}) {await progress("Aligning recorded positions to the detailed scenery…");_ = ReplayRegistration.register(&root,circuit:circuit)}
   let data=try JSONSerialization.data(withJSONObject:root)
   try FileManager.default.createDirectory(at:archives,withIntermediateDirectories:true);try data.write(to:path(s.id),options:.atomic)
   return data
