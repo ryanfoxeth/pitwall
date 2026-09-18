@@ -12,7 +12,8 @@ def run(cmd,log):
  with log.open('w') as f:subprocess.run(cmd,stdout=f,stderr=subprocess.STDOUT,check=True)
 def verify(path):
  d=json.loads(subprocess.check_output([probe,'-v','error','-show_entries','format=duration,size:stream=codec_type,width,height,nb_frames,r_frame_rate','-of','json',str(path)]));v=next(x for x in d['streams'] if x['codec_type']=='video');assert (v['width'],v['height'],v['nb_frames'],v['r_frame_rate'])==(1280,720,'1440','24/1'),d;assert abs(float(d['format']['duration'])-60)<.02;return d
-for c in sorted(catalog,key=lambda c:(c['round']<15,c['round'])):
+order={cid:i for i,cid in enumerate(a.ids or [])}
+for c in sorted(catalog,key=lambda c:order.get(c['id'],len(catalog)) if a.ids else (c['round']<15,c['round'])):
  cid=c['id']
  if a.ids and cid not in a.ids:continue
  d=a.output/names[cid];d.mkdir(exist_ok=True);video=d/'Grand Prix - Landscape.mp4';frames=Path(tempfile.gettempdir())/'pitwall-grand-prix-frames'/cid;source=a.scenes/(cid+'.json');signature=hashlib.sha256(source.read_bytes()+b''.join((tools/n).read_bytes() for n in ['build_grand_prix_movie.py','build_season_blender.py','build_monaco_blender.py','scenery_blender.py','terrain_grid.py'])).hexdigest()

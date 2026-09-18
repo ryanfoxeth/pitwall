@@ -13,6 +13,7 @@ if cid!='monaco':
  source=source.replace("['americas','sepang','interlagos','rodriguez']", "['americas','sepang','interlagos','rodriguez','suzuka','catalunya','red_bull_ring','silverstone','spa','hungaroring','zandvoort','monza','villeneuve']")
  start=source.index('def ground(');end=source.index('\ndef surface(',start);source=source[:start]+"from terrain_grid import TerrainGrid\nterrain_sampler=TerrainGrid(d['terrainGrid'])\ndef ground(x,y):return terrain_sampler.height(x,y)\n"+source[end:]
  source=source.replace('base=-8',"base=min(p[2] for tri in d['terrain'] for p in tri)-3")
+ source=source.replace("z=b['base'];height=","z=b['base'];poly('Stadium ground foundation',p,base,z-base+.1,'Concrete');height=")
  source=source.replace("'Water',-.7)","'Water',d['waterLevel'])")
 sys.argv=['blender','--',str(datafile),str(dest/'scenery.usdz'),str(dest/'scenery.png'),'grandPrix']
 exec(compile(source,str(script),'exec'),globals())
