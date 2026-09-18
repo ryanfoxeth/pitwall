@@ -111,3 +111,9 @@ Circuit geometry: bacinger/f1-circuits (MIT); circuit metadata: f1db/f1db, licen
 Baku, Sepang, Singapore, Austin, Mexico City, Interlagos, Las Vegas, Lusail and Yas Marina include mapped buildings, water and characteristic landmarks. Grand Prix, Tron and Retro Kart have separate scenery assets; F1 Miniature shares the Grand Prix environment. All use the same geographic frame and road alignment.
 
 See [sources, accuracy limits and rebuilding](visionos/Assets/Season/README.md). These are geographically grounded tabletop interpretations, not surveyed architectural reconstructions.
+
+## Consistent tabletop scale
+
+All catalog circuits and registered replays use the same real-world scale at a given volume size. Monaco is therefore physically smaller than Austin; switching circuits or themes does not refit each track to fill the tabletop. Horizontal distance and elevation use the same uniform scale, with no vertical exaggeration. Rotation preserves scale. Hand-resizing the volume changes the shared display scale. Vehicle size remains adjustable and is independent of circuit size.
+
+A common 3,600 m horizontal / 350 m vertical reference envelope accommodates the currently bundled scenery at all rotations; it does not alter geographic coordinates. Unknown, unregistered OpenF1 geometry is treated as provider decimetres. New scenery must pass the full-season containment checks before release. DEBUG `--validate-season-scenery` now checks all 23 circuits × four themes × three rotations × two volume sizes (552 fits), including scale invariance.

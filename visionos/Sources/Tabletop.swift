@@ -25,6 +25,7 @@ import Spatial
  }()
  var lastFitDiagnostic = ""
  var center=SIMD3<Float>.zero;var factor:Float=1;var baseZ:Float=0
+ var authoredUnitsPerMeter:Float=1
  func fit(in available: BoundingBox) {
   guard available.extents.x > 0.05, available.extents.y > 0.01, available.extents.z > 0.05 else { return }
   // Measure in the presentation parent's coordinates. Scene/world bounds can
@@ -33,9 +34,9 @@ import Spatial
   root.scale = SIMD3(repeating: 1)
   // Cars and trails must never control the circuit’s size or center.
   let bounds = (circuit.parent == nil ? root : circuit).visualBounds(relativeTo: presentation)
-  let extent = simd_max(bounds.extents, SIMD3(repeating: 0.001))
-  let ratios = available.extents / extent
-  let scale = max(0.001, min(ratios.x,min(ratios.y,ratios.z))*0.96)
+  // Undo the asset's per-circuit normalization before applying a common
+  // meters-to-display ratio. Fitting each circuit independently destroys it.
+  let scale = TabletopScale.metersToDisplay(available.extents) / authoredUnitsPerMeter
   presentation.scale = SIMD3(repeating: scale)
   presentation.position = available.center-bounds.center*scale
   #if DEBUG
@@ -57,6 +58,9 @@ import Spatial
   root.children.removeAll();circuit.children.removeAll();root.addChild(circuit);bikes=[:];vehicleRoles=[:];trails=[];lastTrack=track
   guard track.count>2 else{return}
   let xs=track.map(\.x),ys=track.map(\.y);center=SIMD3(((xs.min() ?? 0)+(xs.max() ?? 0))/2,((ys.min() ?? 0)+(ys.max() ?? 0))/2,0);factor=0.55/max(1,max((xs.max() ?? 1)-(xs.min() ?? 0),(ys.max() ?? 1)-(ys.min() ?? 0)));baseZ=track.map(\.z).min() ?? 0
+  // Catalog/registered geometry is in meters; raw OpenF1 coordinates are dm.
+  let catalogMeters=CircuitCatalog.all.contains{$0.track==track}
+  authoredUnitsPerMeter=factor * (catalogMeters ? 1:10)
   let terrain=Diorama(track.map(project),world:CircuitWorld.forTitle(title),theme:theme)
   let template = theme == .grandPrix ? Self.monacoTemplate : theme == .tron ? Self.monacoTronTemplate : theme == .kart ? Self.monacoKartTemplate : nil
   let isMonaco = CircuitCatalog.all.first(where:{$0.id == "monaco"})?.track == track
@@ -229,7 +233,7 @@ import Spatial
     bike=makeVehicle(highlighted:highlighted,number:c.id,leader:c.id == race.leader);vehicleRoles[c.id]=role;bike.name="driver-\(c.id)"
     bikes[c.id]=bike;root.addChild(bike)
    }
-   bike.scale=SIMD3(repeating:Float(race.vehicleScale))
+   bike.scale=SIMD3(repeating:Float(race.vehicleScale) * authoredUnitsPerMeter / (0.55/1800))
    bike.isEnabled=c.point != nil
    if let p=c.point {bike.position=project(p);let old=previousHeading[c.id] ?? c.heading;let delta=atan2(sin(c.heading-old),cos(c.heading-old));let lean:Float=theme == .kart && (race.playing || (race.mode == "Live" && !race.tvPaused)) ? max(-0.16,min(0.16,-delta/dt*0.035)):0;previousHeading[c.id]=c.heading;bike.orientation=simd_quatf(angle:c.heading,axis:SIMD3(0,1,0))*simd_quatf(angle:lean,axis:SIMD3(1,0,0));let color:UIColor=theme == .grandPrix ? UIColor(Color(hex:c.color)) : c.id==race.leader ? .yellow:c.id==race.selected ? .cyan:UIColor(Color(hex:c.color));if lastColors[c.id] != color {colorVehicle(bike,color);lastColors[c.id]=color}}
   }

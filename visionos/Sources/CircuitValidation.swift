@@ -47,7 +47,7 @@ import RealityKit
     // Match the production fit target; disabled trail placeholders are outside it.
     let actual=scene.circuit.visualBounds(relativeTo:world)
     let ratios=actual.extents/size
-    if !ratios.x.isFinite || !ratios.y.isFinite || !ratios.z.isFinite || !actual.center.x.isFinite || !actual.center.y.isFinite || !actual.center.z.isFinite || abs(max(ratios.x,max(ratios.y,ratios.z))-0.96)>=0.002 || simd_length(actual.center)>=0.002 {
+    if !ratios.x.isFinite || !ratios.y.isFinite || !ratios.z.isFinite || !actual.center.x.isFinite || !actual.center.y.isFinite || !actual.center.z.isFinite || max(ratios.x,max(ratios.y,ratios.z))>0.961 || abs(scene.presentation.scale.x*scene.authoredUnitsPerMeter-TabletopScale.metersToDisplay(size))>0.000001 || simd_length(actual.center)>=0.002 {
      failures.append("\(id): size \(size), bounds \(actual.extents), center \(actual.center)")
     }
     checks+=1
@@ -106,7 +106,7 @@ import RealityKit
    let target=BoundingBox(min:-size/2,max:size/2);scene.fit(in:target)
    let actual=scene.circuit.visualBounds(relativeTo:scene.coordinateRoot)
    let ratios=actual.extents/size
-   if simd_length(actual.center)>0.002 || abs(max(ratios.x,max(ratios.y,ratios.z))-0.96)>0.002 {failures.append("Monaco failed fit at angle \(angle), size \(size)")}
+   if simd_length(actual.center)>0.002 || max(ratios.x,max(ratios.y,ratios.z))>0.961 || abs(scene.presentation.scale.x*scene.authoredUnitsPerMeter-TabletopScale.metersToDisplay(size))>0.000001 {failures.append("Monaco failed fit at angle \(angle), size \(size)")}
    checks+=1
   }
  }

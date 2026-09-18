@@ -50,4 +50,4 @@ sh visionos/tools/check_live_registration.sh
 
 The builder creates editable `.blend` files, PNG previews and USDZ files named `<circuit>-<style>` in the output directory. Copy the USDZs to `Sources/Resources/Scenery_<circuit>_<style>.usdz` before rebuilding the app. `BLENDER` can override the default macOS Blender executable. Pass circuit IDs after the output directory to rebuild a subset.
 
-Native DEBUG `--validate-season-scenery` loads all nine circuits in all four themes, checking volume containment at three rotations and two sizes (216 fits). It writes `Documents/season-scenery-validation.json`. This is separate from physical headset acceptance and live race validation.
+Native DEBUG `--validate-season-scenery` checks all 23 circuits in all four themes, checking common real-world scale and volume containment at three rotations and two sizes (552 fits), with required scenery loading for the nine remaining-season circuits. It writes `Documents/season-scenery-validation.json`. This is separate from physical headset acceptance and live race validation.

@@ -50,7 +50,7 @@ struct ControlView: View {
     Text("Scales cars, lightcycles and blocks in every theme. Saved for next time.").font(.caption).foregroundStyle(.secondary)
    }
    HStack{Text("Rotate");Slider(value:$race.rotation,in:-Double.pi...Double.pi)}
-   Text("Resize the track using the volume’s corner handles. The entire model scales uniformly to fit; enlarge height and depth too if one dimension limits its size.").font(.caption).foregroundStyle(.secondary)
+   Text("Resize the track using the volume’s corner handles. All circuits share one real-world scale at the same volume size. Smaller circuits occupy less space. Enlarge the volume to enlarge everything.").font(.caption).foregroundStyle(.secondary)
    DisclosureGroup("Model credits") {
     Text("Monaco and remaining-season scenery: © OpenStreetMap contributors (ODbL). Original stylized landmarks. Approximate building heights and terrain; decorative docked yachts.").font(.caption)
     Link("OpenStreetMap attribution",destination:URL(string:"https://www.openstreetmap.org/copyright")!)
