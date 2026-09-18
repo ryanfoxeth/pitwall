@@ -24,5 +24,14 @@ for c in catalog:
   horizontal=math.dist(p[:2],q[:2]);assert horizontal<25.01
   if horizontal>.1:grades.append(abs(q[2]-p[2])/horizontal)
  assert max(grades)<.25,(c['id'],max(grades))
+ # Independently check projection against cached geographic source geometry.
+ # This checks registration only, not real-world accuracy of the source outline.
+ if len(sys.argv)>2 and c['id']!='monaco':
+  from shapely.geometry import LineString,Point
+  raw=json.loads((Path(sys.argv[2])/(c['id']+'-outline.json')).read_text())['features'][0]['geometry']['coordinates']
+  projection=d['terrainGrid']['projection'];origin=projection['origin'];factor=projection['factors']
+  line=LineString([((p[0]-origin[0])*factor[0],(p[1]-origin[1])*factor[1]) for p in raw])
+  error=max(line.distance(Point(p[:2])) for p in d['track'])
+  assert error<.01,(c['id'],'geographic projection mismatch',error)
  reports.append({'id':c['id'],'points':len(d['track']),'maximumModeledGradePercent':round(max(grades)*100,2),'provider':source['provider'],'status':'passed'})
 (root/'checks.json').write_text(json.dumps(reports,indent=2));print('PASS: 23 geographic terrain inputs; bilinear units/datum, coverage, finite heights, unchanged horizontal layouts, bounded modeled grades and explicit non-survey provenance')

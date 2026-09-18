@@ -27,7 +27,7 @@ python3 visionos/tools/fetch_ground_dtm.py /tmp/pitwall-land /tmp/pitwall-ground
 python3 visionos/tools/fetch_austin_ground.py /tmp/pitwall-ground
 python3 visionos/tools/fetch_monaco_ground.py /tmp/pitwall-ground
 python3 visionos/tools/prepare_ground_movies.py /tmp/pitwall-all-scenes /tmp/pitwall-ground /tmp/pitwall-ground-scenes /tmp/pitwall-season
-python3 visionos/tools/check_ground_movie_sources.py /tmp/pitwall-ground-scenes
+python3 visionos/tools/check_ground_movie_sources.py /tmp/pitwall-ground-scenes /tmp/pitwall-season
 python3 visionos/tools/render_grand_prix_season.py /tmp/pitwall-ground-scenes /path/to/movies
 ```
 
