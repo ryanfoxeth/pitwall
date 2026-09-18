@@ -1,0 +1,255 @@
+{
+  "albert_park": {
+    "origin": [
+      144.9703602671233,
+      -37.845938767123286
+    ],
+    "factors": [
+      87905.32302587281,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "a0c8d40131a512d8f5ade7bcee2fc20db5b21c348b721dcd4138fa0cd0b0c461"
+  },
+  "shanghai": {
+    "origin": [
+      121.2192919503546,
+      31.340176468085115
+    ],
+    "factors": [
+      95077.7805085033,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "72f2bc1ba0a37157b980d2ed366866fffa2f89ae2c55f04d5ea10bc78f694284"
+  },
+  "suzuka": {
+    "origin": [
+      136.5328203895349,
+      34.84458163372092
+    ],
+    "factors": [
+      91360.86840941531,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "a8269d5981b9f90f2b72baba926093baf266d4d04909b4bec3b989b2e81de497"
+  },
+  "miami": {
+    "origin": [
+      -80.23774728155338,
+      25.957636174757287
+    ],
+    "factors": [
+      100089.80763973105,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "8cd8253f6b38d063e35df57e952fa0d51e3071a39981041ca17a64135d2927c6"
+  },
+  "villeneuve": {
+    "origin": [
+      -73.52642202941176,
+      45.50438480392158
+    ],
+    "factors": [
+      78019.14272316759,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "531e5084b69783620eb33c24ead03feeb5a07b51871d2efce02a867bd0b2ccc9"
+  },
+  "monaco": {
+    "origin": [
+      7.42530133125,
+      43.7371575
+    ],
+    "factors": [
+      80430.80866263293,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "60f49cbc8207ba08c249b896ac4911fa43ca5a5a07e3aa22544581c2d7a895f4"
+  },
+  "catalunya": {
+    "origin": [
+      2.2573730799999994,
+      41.56900800666668
+    ],
+    "factors": [
+      83284.84914622358,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "e1c8b6776f36e7c67f5a1137c6e093fdf3cdd4a0f8b1f9c5ddff669591415e0f"
+  },
+  "red_bull_ring": {
+    "origin": [
+      14.762043333333333,
+      47.22337259259258
+    ],
+    "factors": [
+      75602.0805684248,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "2612b8aeea442c90c69089511f54fe10c15e9aeebca3f980b975563bfb75d3dd"
+  },
+  "silverstone": {
+    "origin": [
+      -1.0163502222222225,
+      52.071824133333315
+    ],
+    "factors": [
+      68425.41696080753,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "19047aeec19e741b75765b8ca60a4947ff4b5036b718931543b81487f79e76a3"
+  },
+  "spa": {
+    "origin": [
+      5.968647300653599,
+      50.43471801960784
+    ],
+    "factors": [
+      70906.05157812979,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "252992bca907cb9ca121a9b69ad8eac761c9190398d841c8e55ca4a2e348d098"
+  },
+  "hungaroring": {
+    "origin": [
+      19.250818914893625,
+      47.58272959574469
+    ],
+    "factors": [
+      75088.11700619671,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "a070ee933f1054e274f5eb189a0359edba1747d8271da46eecf78bd8d56625d4"
+  },
+  "zandvoort": {
+    "origin": [
+      4.545502798319326,
+      52.38768684033615
+    ],
+    "factors": [
+      67940.3122156328,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "ce93ff537597668cae19a3f27b22eacbca15187a3e2d9ec21b76e959ed2059b9"
+  },
+  "monza": {
+    "origin": [
+      9.286544887999996,
+      45.62338510399999
+    ],
+    "factors": [
+      77854.05456276677,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "17aceedecb3fbf20423bc69c7eb99fbafb77df7288f2393e52fd4a8f8fce4aee"
+  },
+  "madring": {
+    "origin": [
+      -3.6214318793103453,
+      40.47276043103447
+    ],
+    "factors": [
+      84682.75376395664,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "2b00729d1a960e7cca86af42241f436c825e69cfb89fd250615364caecdf5239"
+  },
+  "baku": {
+    "origin": [
+      49.840965639534886,
+      40.368991569767424
+    ],
+    "factors": [
+      84813.47880097764,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "749a337d22f06cc63be257bc1b21ad9cd602a1f269a05d3d097606aa82fafdb8"
+  },
+  "sepang": {
+    "origin": [
+      101.73696445192311,
+      2.7607462596153862
+    ],
+    "factors": [
+      111190.79869657391,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "c447adcd0e03f44e224107244d450dd9a1a3af9aaa7736af217bd66aa2f3843f"
+  },
+  "marina_bay": {
+    "origin": [
+      103.85800987068961,
+      1.2906839913793107
+    ],
+    "factors": [
+      111291.75644119624,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "4ddb643af083dca44797f09e0cea25cfcd4dd69b3ea24263e03d5006ae866896"
+  },
+  "americas": {
+    "origin": [
+      -97.63477281286546,
+      30.135188187134524
+    ],
+    "factors": [
+      96274.3511187427,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "be928760ceae019188c4b37f9a2b1166d326599392866776a1e180d011babc60"
+  },
+  "rodriguez": {
+    "origin": [
+      -99.0897637128713,
+      19.402752029702963
+    ],
+    "factors": [
+      104997.7701226242,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "467fead4d0fd6114d363927cafcb2853cf42fee06f7f5865fd7e82bc97c4b89a"
+  },
+  "interlagos": {
+    "origin": [
+      -46.69804186549709,
+      -23.700953163742682
+    ],
+    "factors": [
+      101930.81550842921,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "da2b77b55c3c1d9e1d9423ce6eb82e21d1d3adb975c6c526c199e3af484ea4dc"
+  },
+  "vegas": {
+    "origin": [
+      -115.16571201000002,
+      36.11643097
+    ],
+    "factors": [
+      89926.62082580125,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "33b82c9d338819c344c4d28759ac6a044a9ea03df01e28fed17d529deee58c7d"
+  },
+  "losail": {
+    "origin": [
+      51.45425346728972,
+      25.491746214953263
+    ],
+    "factors": [
+      100482.69660916965,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "297dc8e9cfa97670931de0bb7873a13a9a1d47b60413f1237f8ee615b925e1f8"
+  },
+  "yas_marina": {
+    "origin": [
+      54.6055902406015,
+      24.469356894736837
+    ],
+    "factors": [
+      101321.56357195489,
+      111320.0
+    ],
+    "catalogHorizontalSHA256": "a23fe18310df6a6b4d935209aacfdb31984f1cb70049da5115cfcdd6a245413d"
+  }
+}

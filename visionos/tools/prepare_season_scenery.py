@@ -10,14 +10,15 @@ from shapely.ops import unary_union,polygonize,split
 from shapely.geometry.polygon import orient
 from shapely import constrained_delaunay_triangles
 cache,catalog,out=map(Path,sys.argv[1:]);out.mkdir(parents=True,exist_ok=True)
+projections=json.loads((Path(__file__).resolve().parents[1]/'Assets/TerrainProjections.json').read_text())
 patterns={'baku':r'Maiden Tower|House of Government|Double Gates|Shirvanshah|Tower [123]$', 'sepang':r'Main Grandstand|Paddock/Pit', 'marina_bay':r'Marina Bay Sands Tower|Esplanade (Concert Hall|Theatre)$|^Singapore Flyer$|F1 Pit Building', 'americas':r'Observation|Tower|Amphitheater', 'rodriguez':r'Foro Sol|GNP|Palacio de los Deportes', 'interlagos':r'Autódromo|Paddock', 'vegas':r'^Sphere$|Bellagio Las Vegas|^Paris Las Vegas$|Venetian Tower|Eiffel Tower', 'losail':r'Grandstand|Paddock|Pit', 'yas_marina':r'W Hotel Abu Dhabi|W Abu Dhabi|Main Grandstand|North Grandstand|South Grandstand'}
 def parts(g):return [g] if g.geom_type=='Polygon' else [p for p in getattr(g,'geoms',[]) if p.geom_type=='Polygon']
 def coords(p):return [[round(x,3),round(y,3)] for x,y in orient(p,sign=1).exterior.coords]
 def triangles(p):return [coords(t)[:3] for t in constrained_delaunay_triangles(p).geoms if t.area>.01]
 for c in json.load(open(catalog)):
  id=c['id'];file=cache/(id+'-osm.json')
- if c['round']<15 or not file.exists():continue
- geo=json.load(open(cache/(id+'-outline.json')))['features'][0]['geometry']['coordinates'];geo=np.array(geo)[:,:2];origin=geo.mean(0);factor=np.array([111320*math.cos(math.radians(origin[1])),111320]);track=np.array(c['points']);line=LineString(track[:,:2]);road=line.buffer(10)
+ if not file.exists():continue
+ geo=json.load(open(cache/(id+'-outline.json')))['features'][0]['geometry']['coordinates'];geo=np.array(geo)[:,:2];origin=np.array(projections[id]['origin']);factor=np.array(projections[id]['factors']);track=np.array(c['points']);line=LineString(track[:,:2]);road=line.buffer(10)
  def xy(p):return list((np.array([p['lon'],p['lat']])-origin)*factor)
  def height(x,y):
   a=track;v=np.roll(track,-1,axis=0)[:,:2]-a[:,:2];t=np.clip(((np.array([x,y])-a[:,:2])*v).sum(1)/np.maximum(1e-8,(v*v).sum(1)),0,1);d=((a[:,:2]+v*t[:,None]-[x,y])**2).sum(1);i=int(np.argmin(d));return float(a[i,2]+t[i]*(track[(i+1)%len(track),2]-a[i,2]))
@@ -31,7 +32,7 @@ for c in json.load(open(catalog)):
     lines=[LineString([xy(v) for v in m['geometry']]) for m in f.get('members',[]) if m.get('role')=='outer' and len(m.get('geometry',[]))>=2];g=unary_union(list(polygonize(unary_union(lines)))) if lines else None
    if g is None or g.is_empty:continue
    geometries.append((f,tag,name,g))
-   if (re.search(patterns[id],name,re.I) or (id=='rodriguez' and f['id'] in [377679562,1315400018])) and g.geom_type=='Polygon':
+   if (re.search(patterns.get(id, r'Grandstand|Paddock|Pit Building'),name,re.I) or (id=='rodriguez' and f['id'] in [377679562,1315400018])) and g.geom_type=='Polygon':
     landmarks.append({'osm':f['id'],'name':name,'footprint':coords(g),'center':list(g.centroid.coords)[0],'base':height(g.centroid.x,g.centroid.y)})
   except (ValueError,KeyError):continue
  boundary=unary_union([Polygon(track[:,:2]).buffer(100),line.buffer(100)]+[Polygon(l['footprint']).buffer(30) for l in landmarks]).convex_hull

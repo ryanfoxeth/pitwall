@@ -5,7 +5,7 @@ import json,urllib.request,urllib.parse,time,math
 from pathlib import Path
 import sys
 P=Path(sys.argv[1]) if len(sys.argv)>1 else Path(__file__).resolve().parent/'asset-cache'/'season';P.mkdir(parents=True,exist_ok=True)
-ids={'baku':'az-2016','sepang':'my-1999','marina_bay':'sg-2008','americas':'us-2012','rodriguez':'mx-1962','interlagos':'br-1940','vegas':'us-2023','losail':'qa-2004','yas_marina':'ae-2009'}
+ids={'albert_park': 'au-1953', 'shanghai': 'cn-2004', 'suzuka': 'jp-1962', 'miami': 'us-2022', 'villeneuve': 'ca-1978', 'catalunya': 'es-1991', 'red_bull_ring': 'at-1969', 'silverstone': 'gb-1948', 'spa': 'be-1925', 'hungaroring': 'hu-1986', 'zandvoort': 'nl-1948', 'monza': 'it-1922', 'madring': 'es-2026', 'baku': 'az-2016', 'sepang': 'my-1999', 'marina_bay': 'sg-2008', 'americas': 'us-2012', 'rodriguez': 'mx-1962', 'interlagos': 'br-1940', 'vegas': 'us-2023', 'losail': 'qa-2004', 'yas_marina': 'ae-2009'}
 for name,file in ids.items():
  g=P/(name+'-outline.json')
  if not g.exists():g.write_bytes(urllib.request.urlopen('https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/'+file+'.geojson').read())

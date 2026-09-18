@@ -76,3 +76,7 @@ These 2016 F1 figures corroborate broad height ranges, not current-layout accura
 | rodriguez | 2.55 | 2.8 |
 | interlagos | 42.77 | 43 |
 | yas_marina | 10.88 | 10.7 |
+
+## Geographic ground movie pipeline
+
+The separate [Grand Prix movie pipeline](GRAND_PRIX_VIDEO.md) now samples actual geographic land models for all catalog circuits, including USGS 1m Austin and IGN Monaco coverage. It preserves source observations and distinguishes modeled road engineering from ground elevation. This optional pipeline does not change the bundled app profiles described above.
