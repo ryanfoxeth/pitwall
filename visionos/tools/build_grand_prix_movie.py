@@ -85,7 +85,7 @@ scene=bpy.context.scene
 # Eevee renders geographic scenes with materials and sun shadows.
 try:scene.render.engine='BLENDER_EEVEE'
 except TypeError:scene.render.engine='BLENDER_EEVEE_NEXT'
-scene.eevee.taa_render_samples=16
+scene.eevee.taa_render_samples=8
 scene.render.resolution_x=1280;scene.render.resolution_y=720;scene.render.resolution_percentage=100;scene.render.fps=24;scene.frame_start=1;scene.frame_end=1440
 scene.world.use_nodes=True;scene.world.node_tree.nodes['Background'].inputs[0].default_value=(.24,.32,.45,1);scene.world.node_tree.nodes['Background'].inputs[1].default_value=.025
 sky=scene.world.node_tree.nodes.new('ShaderNodeTexSky');sky.sky_type='MULTIPLE_SCATTERING';sky.sun_elevation=.55;sky.sun_rotation=-.5;sky.sun_disc=False;scene.world.node_tree.links.new(sky.outputs['Color'],scene.world.node_tree.nodes['Background'].inputs[0])
@@ -108,7 +108,7 @@ for frame in range(1,1441):
 scene.render.image_settings.file_format='PNG';scene.render.image_settings.color_mode='RGB';frame_dir=Path(tempfile.gettempdir())/'pitwall-grand-prix-frames'/cid;frame_dir.mkdir(parents=True,exist_ok=True);scene.render.filepath=str(frame_dir/'frame-');scene.render.use_overwrite=False
 scene.view_settings.view_transform='AgX';scene.view_settings.look='AgX - Medium High Contrast';scene.render.film_transparent=False
 bpy.ops.wm.save_as_mainfile(filepath=str(dest/'Grand Prix Lap.blend'))
-(dest/'manifest.json').write_text(json.dumps({'circuit':cid,'name':D['name'],'frames':1440,'fps':24,'width':1280,'height':720,'duration':60,'camera':'6s orbit, 4s dive, one complete 50s POV lap','motion':'Staged cinematic motion, not a historical race replay','terrain':D['groundSource'],'engineeringNotes':D['engineeringNotes']},indent=2))
+(dest/'manifest.json').write_text(json.dumps({'circuit':cid,'name':D['name'],'frames':1440,'fps':24,'width':1280,'height':720,'duration':60,'renderSamples':scene.eevee.taa_render_samples,'camera':'6s orbit, 4s dive, one complete 50s POV lap','motion':'Staged cinematic motion, not a historical race replay','terrain':D['groundSource'],'engineeringNotes':D['engineeringNotes']},indent=2))
 if mode=='render':bpy.ops.render.render(animation=True)
 else:
  for f in [100,240,500,900,1300]:scene.frame_set(f);scene.render.filepath=str(dest/f'preview-{f}.png');bpy.ops.render.render(write_still=True)

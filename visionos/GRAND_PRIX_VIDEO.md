@@ -33,7 +33,7 @@ python3 visionos/tools/render_grand_prix_season.py /tmp/pitwall-ground-scenes /p
 
 Monaco uses the existing attributed `Assets/Monaco/MonacoGeography.json` neighborhood. `Assets/TerrainProjections.json` records the geographic conversion for all catalog layouts and an XY hash that prevents silently using a changed outline with the old projection.
 
-Render one circuit using `--ids americas`. Separate processes must have disjoint circuit IDs and different `--status-name` values. Cache reuse assumes unchanged input data; clear a circuit's derived terrain cache when deliberately changing the catalog or upstream data. Keep source provenance with reused samples.
+Render one circuit using `--ids americas`. Explicit IDs are processed in their supplied order. Current outdoor renders use eight Eevee samples, checked against sixteen on a representative stadium frame (SSIM 0.9992); dimensions and frame rate are unchanged. Separate processes must have disjoint circuit IDs and different `--status-name` values. Cache reuse assumes unchanged input data; clear a circuit's derived terrain cache when deliberately changing the catalog or upstream data. Keep source provenance with reused samples.
 
 Each movie folder retains a Blender scene, input JSON, previews, camera collision report, logs, contact sheet, and verification JSON. The renderer checks all 1,440 frames, dimensions, rate and duration, then fully decodes the export before deleting only its own intermediate PNGs. `visualReview: pending` means human/agent visual inspection is still required. A success exit code alone is not visual acceptance. The fixed cinematic speed is intentionally much faster than a real lap.
 
